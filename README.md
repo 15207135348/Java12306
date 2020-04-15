@@ -40,11 +40,11 @@
 
         *   `pip install -r requirements.txt`
 
-        *   Java依赖库 [pom.xml](https://github.com/15207135348/Java12306/blob/master/pom.xml)
+*   Java依赖库 [pom.xml](https://github.com/15207135348/Java12306/blob/master/pom.xml)
 
-            *   安装方法：
+    *   安装方法：
 
-                *   使用maven自动下载和安装依赖库
+        *   使用maven自动下载和安装依赖库
 
 #### 项目使用说明
 
