@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -171,8 +172,7 @@ public class API12306Service {
     }
 
 
-    public String getStations(Session session)
-    {
+    public String getStations(Session session) {
         Object o = session.httpsGet(GET_STATIONS_URL, null);
         if (!(o instanceof String)) {
             return null;
@@ -365,11 +365,11 @@ public class API12306Service {
         head.put("Host", "kyfw.12306.cn");
         head.put("Accept", "*/*");
         session.httpsGet(String.format(TICKET_PRICES_INIT_URL, train_no,
-            from_station_no, to_station_no, seat_types, date),
-            head);
+                from_station_no, to_station_no, seat_types, date),
+                head);
         Object object = session.httpsGet(String.format(TICKET_PRICES_URL, train_no,
-            from_station_no, to_station_no, seat_types, date),
-            head);
+                from_station_no, to_station_no, seat_types, date),
+                head);
         if (object instanceof com.alibaba.fastjson.JSONObject) {
             JSONObject jsonObject = (JSONObject) object;
             if (jsonObject.getBoolean("status")) {
@@ -404,24 +404,24 @@ public class API12306Service {
             return false;
         }
         Object[] params = new Object[]{
-            "secretStr",
-            "train_date",
-            "back_train_date",
-            "tour_flag",
-            "purpose_codes",
-            "query_from_station_name",
-            "query_to_station_name",
-            "undefined"
+                "secretStr",
+                "train_date",
+                "back_train_date",
+                "tour_flag",
+                "purpose_codes",
+                "query_from_station_name",
+                "query_to_station_name",
+                "undefined"
         };
         Object[] values = new Object[]{
-            secretStr,
-            trainDate,
-            backTrainDate,
-            "dc",
-            "ADULT",
-            fromStation,
-            toStation,
-            ""
+                secretStr,
+                trainDate,
+                backTrainDate,
+                "dc",
+                "ADULT",
+                fromStation,
+                toStation,
+                ""
         };
         List<NameValuePair> paramsList = HttpClient.getParams(params, values);
         Object o = session.httpsPost(SUBMIT_ORDER_REQUEST_URL, paramsList, null);
@@ -549,26 +549,26 @@ public class API12306Service {
      */
     public boolean checkOrderInfo(Session session, String token, String passengerTicketStr, String oldPassengerStr) {
         Object[] params = new Object[]{
-            "cancel_flag",
-            "bed_level_order_num",
-            "passengerTicketStr",
-            "oldPassengerStr",
-            "tour_flag",
-            "randCode",
-            "whatsSelect",
-            "_json_att",
-            "REPEAT_SUBMIT_TOKEN"
+                "cancel_flag",
+                "bed_level_order_num",
+                "passengerTicketStr",
+                "oldPassengerStr",
+                "tour_flag",
+                "randCode",
+                "whatsSelect",
+                "_json_att",
+                "REPEAT_SUBMIT_TOKEN"
         };
         Object[] values = new Object[]{
-            "2",
-            "000000000000000000000000000000",
-            passengerTicketStr,
-            oldPassengerStr,
-            "dc",
-            "",
-            "1",
-            "",
-            token
+                "2",
+                "000000000000000000000000000000",
+                passengerTicketStr,
+                oldPassengerStr,
+                "dc",
+                "",
+                "1",
+                "",
+                token
         };
         List<NameValuePair> paramsList = HttpClient.getParams(params, values);
         Object o = session.httpsPost(CHECK_ORDER_INFO_URL, paramsList, null);
@@ -609,30 +609,30 @@ public class API12306Service {
         String REPEAT_SUBMIT_TOKEN = data.getString("token");
         String gmtDate = TimeFormatUtil.toBeijingGMTTime(date);
         Object[] params = new Object[]{
-            "train_date",
-            "train_no",
-            "stationTrainCode",
-            "seatType",
-            "fromStationTelecode",
-            "toStationTelecode",
-            "leftTicket",
-            "purpose_codes",
-            "train_location",
-            "_json_att",
-            "REPEAT_SUBMIT_TOKEN"
+                "train_date",
+                "train_no",
+                "stationTrainCode",
+                "seatType",
+                "fromStationTelecode",
+                "toStationTelecode",
+                "leftTicket",
+                "purpose_codes",
+                "train_location",
+                "_json_att",
+                "REPEAT_SUBMIT_TOKEN"
         };
         Object[] values = new Object[]{
-            gmtDate,
-            train_no,
-            stationTrainCode,
-            seatType,
-            fromStationTelecode,
-            toStationTelecode,
-            leftTicket,
-            purpose_codes,
-            train_location,
-            "",
-            REPEAT_SUBMIT_TOKEN
+                gmtDate,
+                train_no,
+                stationTrainCode,
+                seatType,
+                fromStationTelecode,
+                toStationTelecode,
+                leftTicket,
+                purpose_codes,
+                train_location,
+                "",
+                REPEAT_SUBMIT_TOKEN
         };
         List<NameValuePair> paramsList = HttpClient.getParams(params, values);
         Object o = session.httpsPost(GET_QUEUE_COUNT_URL, paramsList, null);
@@ -666,36 +666,36 @@ public class API12306Service {
         String choose_seats = "";
         String REPEAT_SUBMIT_TOKEN = data.getString("token");
         Object[] params = new Object[]{
-            "passengerTicketStr",
-            "oldPassengerStr",
-            "purpose_codes",
-            "key_check_isChange",
-            "leftTicketStr",
-            "train_location",
-            "seatDetailType",
-            "roomType",
-            "dwAll",
-            "whatsSelect",
-            "_json_at",
-            "randCode",
-            "choose_seats",
-            "REPEAT_SUBMIT_TOKEN"
+                "passengerTicketStr",
+                "oldPassengerStr",
+                "purpose_codes",
+                "key_check_isChange",
+                "leftTicketStr",
+                "train_location",
+                "seatDetailType",
+                "roomType",
+                "dwAll",
+                "whatsSelect",
+                "_json_at",
+                "randCode",
+                "choose_seats",
+                "REPEAT_SUBMIT_TOKEN"
         };
         Object[] values = new Object[]{
-            passengerTicketStr,
-            oldPassengerStr,
-            purpose_codes,
-            key_check_isChange,
-            leftTicketStr,
-            train_location,
-            seatDetailType,
-            roomType,
-            dwAll,
-            whatsSelect,
-            _json_at,
-            randCode,
-            choose_seats,
-            REPEAT_SUBMIT_TOKEN
+                passengerTicketStr,
+                oldPassengerStr,
+                purpose_codes,
+                key_check_isChange,
+                leftTicketStr,
+                train_location,
+                seatDetailType,
+                roomType,
+                dwAll,
+                whatsSelect,
+                _json_at,
+                randCode,
+                choose_seats,
+                REPEAT_SUBMIT_TOKEN
         };
         List<NameValuePair> paramsList = HttpClient.getParams(params, values);
         Object o = session.httpsPost(CONFIRM_SINGLE_FOR_QUEUE_URL, paramsList, null);
@@ -952,11 +952,12 @@ public class API12306Service {
         private final static Random random = new Random();
         private final static AtomicInteger index = new AtomicInteger(0);
         private final static String[] cookieCodes = new String[]{
-            "FGEk4w5eRZl9IzvDIxO9KKPTJP59E9it",
-            "FGE_l0XpR4Kp5DAUduAakGLLkP4Jwg-R",
-            "FGHMOaIK-x1IV7nRvCP9KYiC_ft-LNAT",
-            "FGGuwMQn9jAOSoEc6iOPEtK6dslrpCha",
-            "FGHjNjFGHbjB0XksOK6JvkqcKwBxNGnt"
+                "FGEk4w5eRZl9IzvDIxO9KKPTJP59E9it",
+                "FGE_l0XpR4Kp5DAUduAakGLLkP4Jwg-R",
+                "FGHMOaIK-x1IV7nRvCP9KYiC_ft-LNAT",
+                "FGGuwMQn9jAOSoEc6iOPEtK6dslrpCha",
+                "FGHjNjFGHbjB0XksOK6JvkqcKwBxNGnt",
+                "FGEJiTzNIFlFkErQmUYxfaLrciObGcAv"
         };
 
         static {
@@ -1024,7 +1025,7 @@ public class API12306Service {
             data.put("timeZone", "-8");
             data.put("touchSupport", "99115dfb07133750ba677d055874de87");
             data.put("userAgent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0." +
-                (random.nextInt(2000) + 5000) + ".0 Safari/537.36");
+                    (random.nextInt(2000) + 5000) + ".0 Safari/537.36");
             data.put("webSmartID", "24a381e8423bbbfee90f76c76d10c077");
         }
 
@@ -1042,7 +1043,7 @@ public class API12306Service {
             data.put("cookieCode", getCookieCode());
             data.put("scrAvailSize", (random.nextInt(500) + 500) + "x1680");
             data.put("userAgent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0." +
-                (random.nextInt(2000) + 5000) + ".0 Safari/537.36");
+                    (random.nextInt(2000) + 5000) + ".0 Safari/537.36");
 //            f75bd56aa7ab9c355a2ed6ff4573916d
             data.put("webSmartID", "24a381e8423bbbfee90f76c76d10c077");
             return data;
@@ -1050,14 +1051,14 @@ public class API12306Service {
 
         static String getHashCode(String script, String dataStr) {
             JsFunc hashAlg = JsParser.getFunc(script, "hashAlg");
-            if (hashAlg == null){
+            if (hashAlg == null) {
                 return null;
             }
             String shaFuncName = null;
             List<JsFunc> funcs = JsParser.getFuncs(script);
             StringBuilder funcsStr = new StringBuilder();
-            for (JsFunc jsFunc : funcs){
-                if (jsFunc.getTotal().contains("SHA256")){
+            for (JsFunc jsFunc : funcs) {
+                if (jsFunc.getTotal().contains("SHA256")) {
                     shaFuncName = jsFunc.getName();
                 }
                 funcsStr.append(jsFunc.getTotal()).append("\n");
@@ -1083,17 +1084,17 @@ public class API12306Service {
             List<String> shaOut = new ArrayList<>();
             builder = new StringBuilder();
             for (String s : statements) {
-                if (s.contains("SHA256") ||(shaFuncName!= null && s.contains(shaFuncName+"("))) {
+                if (s.contains("SHA256") || (shaFuncName != null && s.contains(shaFuncName + "("))) {
                     //a=R.SHA256(c).toString(R.enc.Base64)
                     //a=za(c)
                     shaIn.add(s.substring(s.indexOf("(") + 1, s.indexOf(")")));
                     shaOut.add(s.substring(0, s.indexOf("=")));
                     functions.add(String.format(
-                        "function func%d(%s){\n%sreturn [%s];\n}",
-                        functions.size(),
-                        String.join(",", getKeys(map)),
-                        builder.toString(),
-                        String.join(",", getKeys(map)))
+                            "function func%d(%s){\n%sreturn [%s];\n}",
+                            functions.size(),
+                            String.join(",", getKeys(map)),
+                            builder.toString(),
+                            String.join(",", getKeys(map)))
                     );
                     builder = new StringBuilder();
                 } else {
@@ -1190,22 +1191,22 @@ public class API12306Service {
         static String getOnePassengerTicketStr(Passenger passenger, String seat) {
             //座位类型
             String builder = SeatType.findNo(seat) + "," +
-                //固定值
-                "0" + "," +
-                //票类型(成人/儿童)
-                passenger.getPassenger_type() + "," +
-                //乘客名字
-                passenger.getPassenger_name() + "," +
-                //身份类型(身份证/军官证….)
-                passenger.getPassenger_id_type_code() + "," +
-                //证件号
-                passenger.getPassenger_id_no() + "," +
-                //电话号码
-                (passenger.getMobile_no().isEmpty() ? passenger.getPhone_no() : passenger.getMobile_no()) + "," +
-                //固定值
-                "N" + "," +
-                //allEncStr
-                passenger.getAllEncStr();
+                    //固定值
+                    "0" + "," +
+                    //票类型(成人/儿童)
+                    passenger.getPassenger_type() + "," +
+                    //乘客名字
+                    passenger.getPassenger_name() + "," +
+                    //身份类型(身份证/军官证….)
+                    passenger.getPassenger_id_type_code() + "," +
+                    //证件号
+                    passenger.getPassenger_id_no() + "," +
+                    //电话号码
+                    (passenger.getMobile_no().isEmpty() ? passenger.getPhone_no() : passenger.getMobile_no()) + "," +
+                    //固定值
+                    "N" + "," +
+                    //allEncStr
+                    passenger.getAllEncStr();
             return builder;
         }
 
