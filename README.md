@@ -4,6 +4,10 @@
 
 `https://github.com/15207135348/qiangpiaojiang`
 
+12306接口文档传送门
+
+`https://github.com/15207135348/12306InterfaceDoc`
+
 #### 功能列表
 
 *   [x]  车次查询
