@@ -320,14 +320,20 @@ public class API12306Service {
      * @param date      日期 2020-01-24
      * @param shortFrom BJD
      * @param shortTo   SHH
+     * @param useProxy  是否使用代理
      */
-    public JSONArray queryTickets(Session session, String date, String shortFrom, String shortTo) {
+    public JSONArray queryTickets(Session session, String date, String shortFrom, String shortTo, boolean useProxy) {
 
         JSONArray jsonArray = null;
         //查询失败时重试一下
         for (int j = 0; j < 5; ++j) {
             String url = "leftTicket/query";
-            Object get = session.httpsGet(LEFT_TICKET_INIT_URL, null);
+            Object get;
+            if (useProxy){
+                get = session.httpsGet(LEFT_TICKET_INIT_URL, null);
+            }else {
+                get = session.httpsGetWithoutProxy(LEFT_TICKET_INIT_URL, null);
+            }
             if (get instanceof String) {
                 String content = (String) get;
                 Pattern pattern = Pattern.compile("var CLeftTicketUrl = '(.*)'");
@@ -336,7 +342,12 @@ public class API12306Service {
                     url = m.group(1);
                 }
             }
-            Object o = session.httpsGet(String.format(TICKET_URL, url, date, shortFrom, shortTo), null);
+            Object o;
+            if (useProxy){
+                o = session.httpsGet(String.format(TICKET_URL, url, date, shortFrom, shortTo), null);
+            }else {
+                o = session.httpsGetWithoutProxy(String.format(TICKET_URL, url, date, shortFrom, shortTo), null);
+            }
             if (!(o instanceof JSONObject)) {
                 LOGGER.warn(String.format("查询失败，重新查询，当前重试次数%d", j + 1));
                 continue;

@@ -169,9 +169,9 @@ public class Session implements Serializable {
 
     private CloseableHttpClient getClient(boolean isHttps, boolean useProxy) {
         RequestConfig.Builder builder = RequestConfig.custom()
-                .setSocketTimeout(5000)
-                .setConnectTimeout(5000)
-                .setConnectionRequestTimeout(5000)
+                .setSocketTimeout(10000)
+                .setConnectTimeout(10000)
+                .setConnectionRequestTimeout(10000)
                 .setStaleConnectionCheckEnabled(true);
         RequestConfig defaultRequestConfig;
         if (!useProxy) {

@@ -69,12 +69,12 @@ public class Fuck12306Controller {
         Arrays.sort(dateArray, Comparator.reverseOrder());
         try {
             List<Train> trains = queryTicketService.getTrains(sessionPoolService.getSession(null),
-                dateArray[0], fromStation, toStation);
+                dateArray[0], fromStation, toStation, false);
             if (trains == null)
             {
                 sessionPoolService.remove(null);
                 trains = queryTicketService.getTrains(sessionPoolService.getSession(null),
-                    dateArray[0], fromStation, toStation);
+                    dateArray[0], fromStation, toStation, false);
             }
 //            queryTicketService.setPrices(trains);
             JSONArray array = new JSONArray();

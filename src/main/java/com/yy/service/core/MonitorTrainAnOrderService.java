@@ -146,9 +146,7 @@ public class MonitorTrainAnOrderService {
             String type = p.getString("ticket_type");
             String idType = p.getString("passenger_id_name");
             String idNo = p.getString("passenger_id_no");
-            boolean ifReceive = "Y".equals(p.getString("if_receive"));
-            String mobile = p.getString("mobile_no").isEmpty() ? p.getString("phone_no") : p.getString("mobile_no");
-            Passenger passenger = new Passenger(name, type, idNo, idType, task.username, ifReceive, mobile);
+            Passenger passenger = new Passenger(name, type, idNo, idType, task.username, false, "");
             passengers.add(passenger.toJSON());
         }
         return new TrainAnOrder(reserveNo,
@@ -161,9 +159,12 @@ public class MonitorTrainAnOrderService {
 
     private void queryAndSaveTrainAnOrder(Task task) {
         TrainAnOrder trainAnOrder = queryTrainAnOrder(task);
-        if (trainAnOrder != null) {
-            trainAnOrderRepository.save(trainAnOrder);
+        while (trainAnOrder == null) {
+            LOGGER.error("queryAndSaveTrainAnOrder: result==null");
+            priorityService.sleepRandomTime(1000,2000);
+            trainAnOrder = queryTrainAnOrder(task);
         }
+        trainAnOrderRepository.save(trainAnOrder);
     }
 
     private static class Task {

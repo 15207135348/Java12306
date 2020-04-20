@@ -35,7 +35,7 @@ public class UserOrderPoolService {
     //查票任务
     private Map<String, QueryHandler> handlerMap = new ConcurrentHashMap<>();
     private ThreadPoolExecutor threads = new ThreadPoolExecutor(10,
-        20, 20, TimeUnit.SECONDS, new ArrayBlockingQueue<>(20));
+            20, 20, TimeUnit.SECONDS, new ArrayBlockingQueue<>(20));
     @Autowired
     private StationService stationService;
     @Autowired
@@ -207,7 +207,8 @@ public class UserOrderPoolService {
                     }
                     //查询一次火车票
                     List<Train> trainTickets = queryTrainTicketsService.getTrains(
-                        session, date, fromStation, toStation);
+                            session, date, fromStation, toStation, true);
+                    priorityService.sleep(priority);
                     //更新查询次数
                     for (InnerOrder innerOrder : tasks.values()) {
                         userOrderRepository.addAndGetQueryCountByOrderId(innerOrder.order.getOrderId(), 1);
@@ -247,7 +248,6 @@ public class UserOrderPoolService {
                             tasks.remove(key);
                         }
                     }
-                    priorityService.sleep(priority);
                 } catch (Exception e) {
                     LOGGER.error(e);
                 }
@@ -288,7 +288,7 @@ public class UserOrderPoolService {
                         String count = train.getTicketCount(seat);
                         //如果某一种座位有足够的票，则说明找到了
                         if ((count.equals("有") || (count.matches("^[1-9]\\d*$")
-                            && Integer.parseInt(count) >= innerOrder.people.size()))) {
+                                && Integer.parseInt(count) >= innerOrder.people.size()))) {
                             LOGGER.info(String.format("【%s】座位类型有足够的票", seat));
                             //防止添加了其它座位类型
                             matchResult.foundSeats.clear();
@@ -307,7 +307,7 @@ public class UserOrderPoolService {
                         String count = train.getTicketCount(seat);
                         //如果某种座位有票但不足够
                         if (count.matches("^[1-9]\\d*$")
-                            && Integer.parseInt(count) < innerOrder.people.size()) {
+                                && Integer.parseInt(count) < innerOrder.people.size()) {
                             LOGGER.info(String.format("【%s】座位类型有【%s】张票，已添加进座位列表", seat, count));
                             for (int i = 0; i < Integer.parseInt(count); ++i) {
                                 if (matchResult.foundSeats.size() == innerOrder.people.size()) {
@@ -365,7 +365,7 @@ public class UserOrderPoolService {
                         monitorTrainAnOrderService.addTask(matchResult.innerOrder.order, matchResult.train);
                         LOGGER.info(String.format("submit:候补订单【%s】提交成功", matchResult.innerOrder.order.getOrderId()));
                     }
-                }catch (Exception e){
+                } catch (Exception e) {
                     LOGGER.error("submit:" + e.getMessage());
                 }
                 //设置不在提交状态
@@ -381,13 +381,13 @@ public class UserOrderPoolService {
                 return false;
             }
             String sequenceNo = submitOrderService.submit(
-                matchResult.innerOrder.order.getOpenId(),
-                matchResult.train.getSecretStr(),
-                matchResult.date,
-                matchResult.innerOrder.order.getFromStation(),
-                matchResult.innerOrder.order.getToStation(),
-                matchResult.innerOrder.people,
-                new ArrayList<>(matchResult.foundSeats));
+                    matchResult.innerOrder.order.getOpenId(),
+                    matchResult.train.getSecretStr(),
+                    matchResult.date,
+                    matchResult.innerOrder.order.getFromStation(),
+                    matchResult.innerOrder.order.getToStation(),
+                    matchResult.innerOrder.people,
+                    new ArrayList<>(matchResult.foundSeats));
             //下单失败
             if (sequenceNo == null) {
                 LOGGER.warn(String.format("订单【%s】下单失败！", matchResult.innerOrder.order.getOrderId()));
@@ -406,10 +406,10 @@ public class UserOrderPoolService {
                 return false;
             }
             boolean success = submitOrderService.submitByAfterNate(
-                matchResult.innerOrder.order.getOpenId(),
-                matchResult.train.getSecretStr(),
-                matchResult.foundSeats,
-                matchResult.innerOrder.people);
+                    matchResult.innerOrder.order.getOpenId(),
+                    matchResult.train.getSecretStr(),
+                    matchResult.foundSeats,
+                    matchResult.innerOrder.people);
             //候补下单失败
             if (!success) {
                 LOGGER.warn(String.format("订单【%s】候补下单失败！", matchResult.innerOrder.order.getOrderId()));

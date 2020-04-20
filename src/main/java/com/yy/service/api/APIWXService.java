@@ -37,13 +37,13 @@ public class APIWXService {
         Object [] values = new Object[]{appID, appSecret, code, "authorization_code"};
         List<NameValuePair> paramsList = HttpClient.getParams(params, values);
         JSONObject obj = (JSONObject) HttpClient.sendGet(CODE2SESSION_URL, paramsList);
-        /**
-         * 属性	类型	说明
-         * openid	string	用户唯一标识
-         * session_key string	会话密钥
-         * unionid	string	用户在开放平台的唯一标识符，在满足 UnionID 下发条件的情况下会返回，详见 UnionID 机制说明。
-         * errcode	number	错误码
-         * errmsg	string	错误信息
+        /*
+          属性	    类型	    说明
+          openid	string	用户唯一标识
+          session_key string	会话密钥
+          unionid	string	用户在开放平台的唯一标识符，在满足 UnionID 下发条件的情况下会返回，详见 UnionID 机制说明。
+          errcode	number	错误码
+          errmsg	string	错误信息
          */
         WxAccount wxAccount = null;
         if (obj != null && obj.containsKey("openid") && obj.containsKey("session_key")) {

@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -29,8 +30,9 @@ public class StationService {
     private API12306Service api12306Service;
     @Autowired
     private SessionPoolService sessionPoolService;
+
     @PostConstruct
-    void init(){
+    void init() {
         String data = api12306Service.getStations(sessionPoolService.getSession(null));
         if (data == null) {
             try {
@@ -42,11 +44,9 @@ public class StationService {
                 LOGGER.error(e.getMessage());
             }
         }
-        if (data != null)
-        {
+        if (data != null) {
             String[] strings = data.split("@");
-            for (String s : strings)
-            {
+            for (String s : strings) {
                 String[] split = s.split("\\|");
                 stationMap.put(split[1], split[2]);
                 stationMap.put(split[2], split[1]);
@@ -55,16 +55,15 @@ public class StationService {
         }
     }
 
-    public String getCodeByName(String name){
+    public String getCodeByName(String name) {
         return stationMap.get(name);
     }
 
-    public String getNameByCode(String code){
+    public String getNameByCode(String code) {
         return stationMap.get(code);
     }
 
-    public List<String> getStations()
-    {
+    public List<String> getStations() {
         return stations;
     }
 }

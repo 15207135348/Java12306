@@ -176,10 +176,14 @@ public class MonitorTrainOrderService {
 
     private void queryAndSaveTrainOrder(Task task) {
         Result result = queryTrainOrder(task);
-        if (result != null) {
-            trainOrderRepository.save(result.trainOrder);
-            trainTicketRepository.save(result.tickets);
+        while (result == null) {
+            LOGGER.error("queryAndSaveTrainOrder: result==null");
+            priorityService.sleepRandomTime(1000,2000);
+            result = queryTrainOrder(task);
         }
+        LOGGER.info("queryAndSaveTrainOrder: " + result.tickets);
+        trainOrderRepository.save(result.trainOrder);
+        trainTicketRepository.save(result.tickets);
     }
 
     private static class Task {

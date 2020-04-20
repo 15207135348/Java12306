@@ -28,7 +28,6 @@ public class ProxyService {
 
     private static final Logger LOGGER = Logger.getLogger(ProxyService.class);
 
-
     //获取代理的网站
     private static final String proxyWebSite = "https://www.xicidaili.com/nn/";
     private static final Random random = new Random();
@@ -42,7 +41,6 @@ public class ProxyService {
 
     //获取https类型的代理
     public static HttpHost getHttpsProxy() {
-
 //        HttpHost httpHost = null;
 //        if (!httpHostMap.isEmpty())
 //        {
@@ -57,7 +55,6 @@ public class ProxyService {
 //            }
 //        }
 //        return httpHost;
-
         return null;
     }
 
@@ -95,7 +92,6 @@ public class ProxyService {
                         httpHostMap.put(key(httpProxy), new HttpHost(httpProxy.getIp(), httpProxy.getPort(), "http"));
                     }
                 }
-                sleep(3600000);
             }
         }).start();
     }
@@ -107,9 +103,8 @@ public class ProxyService {
     private void delProxies(){
         new Thread(() -> {
             while (true) {
-                //检查一个小时之前的代理
-                Timestamp timestamp = new Timestamp(System.currentTimeMillis() - 3600000);
-                List<HttpProxy> list = httpProxyRepository.findAllByCheckTimeLessThan(timestamp);
+                //检查所有代理是否可用
+                List<HttpProxy> list = httpProxyRepository.findAll();
                 for (HttpProxy proxy : list) {
                     if (isUseful(proxy)) {
                         Timestamp checkTime = new Timestamp(System.currentTimeMillis());

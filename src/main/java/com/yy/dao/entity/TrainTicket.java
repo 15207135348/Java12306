@@ -148,4 +148,21 @@ public class TrainTicket implements JsonAble {
     public void setUserOrderId(String userOrderId) {
         this.userOrderId = userOrderId;
     }
+
+    @Override
+    public String toString() {
+        return "TrainTicket{" +
+                "id=" + id +
+                ", ticketNo='" + ticketNo + '\'' +
+                ", ticketType='" + ticketType + '\'' +
+                ", passengerName='" + passengerName + '\'' +
+                ", passengerId='" + passengerId + '\'' +
+                ", passengerIdType='" + passengerIdType + '\'' +
+                ", coach='" + coach + '\'' +
+                ", seat='" + seat + '\'' +
+                ", seatType='" + seatType + '\'' +
+                ", price='" + price + '\'' +
+                ", userOrderId='" + userOrderId + '\'' +
+                '}';
+    }
 }

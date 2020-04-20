@@ -8,7 +8,7 @@ import java.util.Random;
 public class PriorityService {
 
     private Random random = new Random();
-    private static final int[] SLEEP_TIME = new int[]{5000, 4000, 3000, 2000, 1000};
+    private static final int[] SLEEP_TIME = new int[]{10000, 8000, 6000, 4000, 2000};
 
     private int getIntBetween(int min, int max){
         return random.nextInt(max - min) + min;

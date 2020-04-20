@@ -37,7 +37,7 @@ public class QueryTrainService {
     @Autowired
     TrainTicketPriceRepository trainTicketPriceRepository;
 
-    public List<Train> getTrains(Session session, String date, String fromStation, String toStation) {
+    public List<Train> getTrains(Session session, String date, String fromStation, String toStation, boolean useProxy) {
 
         //验证车站号是否正确
         String fromStationCode = stationService.getCodeByName(fromStation);
@@ -46,7 +46,7 @@ public class QueryTrainService {
             LOGGER.error(String.format("getTrains: 找不到车站【%s】和【%s】", fromStation, toStation));
             return null;
         }
-        JSONArray array = api12306Service.queryTickets(session, date, fromStationCode, toStationCode);
+        JSONArray array = api12306Service.queryTickets(session, date, fromStationCode, toStationCode, useProxy);
         if (array == null) {
             LOGGER.error("查询余票失败，检查IP是否被封？");
             return null;
@@ -129,7 +129,7 @@ public class QueryTrainService {
         String[] dateArr = dates.split("/");
         Arrays.sort(dateArr, Comparator.reverseOrder());
         long expireTime = 0;
-        List<Train> trains = getTrains(session, dateArr[0], fromStation, toStation);
+        List<Train> trains = getTrains(session, dateArr[0], fromStation, toStation, false);
         Set<String> set = new HashSet<>();
         Collections.addAll(set, trainCodes.split("/"));
         //从晚到早进行遍历
@@ -174,7 +174,7 @@ public class QueryTrainService {
             LOGGER.error(String.format("gettrain: 找不到车站【%s】和【%s】", fromStation, toStation));
             return;
         }
-        JSONArray array = api12306Service.queryTickets(session, date, fromStationCode, toStationCode);
+        JSONArray array = api12306Service.queryTickets(session, date, fromStationCode, toStationCode, true);
         if (array == null) {
             LOGGER.error("查询余票失败，检查IP是否被封？");
             return;

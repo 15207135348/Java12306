@@ -12,10 +12,10 @@ public class Base64s {
         return encoder.encodeToString(textByte);
     }
 
-
     public static String decode(String encodedText)
     {
         Base64.Decoder decoder = Base64.getDecoder();
         return new String(decoder.decode(encodedText), StandardCharsets.UTF_8);
     }
+
 }
