@@ -1,7 +1,5 @@
 package com.yy.constant;
 
-import com.yy.domain.Train;
-
 public enum TrainType {
 
 

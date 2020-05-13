@@ -2,7 +2,7 @@ package com.yy.aop.aspect;
 
 import com.yy.dao.LogRepository;
 import com.yy.dao.entity.Log;
-import com.yy.service.util.CookieService;
+import com.yy.util.CookieUtil;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -23,9 +23,6 @@ public class RecordLogAspect {
     private static final Logger LOGGER = Logger.getLogger(RecordLogAspect.class);
 
     @Autowired
-    CookieService cookieService;
-
-    @Autowired
     private LogRepository logRepository;
 
     /**
@@ -41,14 +38,16 @@ public class RecordLogAspect {
         ServletRequestAttributes sra = (ServletRequestAttributes)RequestContextHolder.getRequestAttributes();
         if (sra != null){
             HttpServletRequest request = sra.getRequest();
-            username = cookieService.getOpenIDFromRequest(request);
+            username = CookieUtil.getOpenIDFromRequest(request);
         }
         Object result = null;
         try {
             //获取开始时间
             start = new Timestamp(System.currentTimeMillis());
+
             //让代理方法执行
             result = pjp.proceed();
+
             // 设置结束时间
             stop = new Timestamp(System.currentTimeMillis());
         } catch (Exception e) {

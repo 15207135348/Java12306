@@ -1,14 +1,16 @@
 package com.yy.controller;
 
 import com.yy.aop.interfaces.RecordLog;
+import com.yy.api.rail.PersonalCenter;
+import com.yy.dao.PassengerRepository;
 import com.yy.dao.WxAccountRepository;
 import com.yy.dao.entity.Passenger;
 import com.yy.dao.entity.WxAccount;
 import com.yy.domain.RespMessage;
-import com.yy.service.api.APIWXService;
-import com.yy.service.core.Login12306Service;
-import com.yy.service.core.PassengerService;
-import com.yy.service.util.CookieService;
+import com.yy.api.APIWeChat;
+import com.yy.api.rail.Login12306;
+import com.yy.util.CookieUtil;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,16 +30,13 @@ import java.util.List;
 @RequestMapping("/auth")
 public class AuthController {
 
+    private static final Logger LOGGER = Logger.getLogger(AuthController.class);
+
+
     @Autowired
-    APIWXService apiwxService;
-    @Autowired
-    PassengerService passengerService;
+    PassengerRepository passengerRepository;
     @Autowired
     private WxAccountRepository wxAccountRepository;
-    @Autowired
-    private Login12306Service login12306Service;
-    @Autowired
-    private CookieService cookieService;
 
     @RecordLog
     @GetMapping(value = "/login_wx")
@@ -52,7 +51,7 @@ public class AuthController {
         }
         try {
             //拿到微信用户的openID和secret等信息
-            WxAccount newAccount = apiwxService.code2Session(code);
+            WxAccount newAccount = APIWeChat.code2Session(code);
             if (newAccount == null) {
                 respMessage.setSuccess(false);
                 respMessage.setMessage("code2Session出现错误");
@@ -67,7 +66,7 @@ public class AuthController {
                 wxAccountRepository.save(oldAccount);
             }
             //添加cookie
-            cookieService.addCookie(newAccount.getOpenId(), response);
+            CookieUtil.addCookie(newAccount.getOpenId(), response);
             //返回消息
             respMessage.setSuccess(true);
             respMessage.setMessage("登陆成功");
@@ -91,7 +90,7 @@ public class AuthController {
     @ResponseBody
     public RespMessage get12306Account(HttpServletRequest request, HttpServletResponse response) {
         RespMessage respMessage = new RespMessage();
-        String openID = cookieService.getOpenIDFromRequest(request);
+        String openID = CookieUtil.getOpenIDFromRequest(request);
         if (openID == null) {
             respMessage.setSuccess(false);
             respMessage.setMessage("请先调用login_wx接口进行登陆");
@@ -120,7 +119,7 @@ public class AuthController {
     @ResponseBody
     public RespMessage set12306Account(HttpServletRequest request, HttpServletResponse response) {
         RespMessage respMessage = new RespMessage();
-        String openID = cookieService.getOpenIDFromRequest(request);
+        String openID = CookieUtil.getOpenIDFromRequest(request);
         if (openID == null) {
             respMessage.setSuccess(false);
             respMessage.setMessage("请先调用login_wx接口进行登陆");
@@ -134,7 +133,7 @@ public class AuthController {
         }
         //验证12306账户密码是否正确
         try {
-            RespMessage loginRes = login12306Service.login(username, password);
+            RespMessage loginRes = Login12306.login(username, password);
             if (!loginRes.isSuccess()) {
                 return loginRes;
             }
@@ -150,11 +149,25 @@ public class AuthController {
         wxAccountRepository.save(wxAccount);
         //异步获取乘客人信息，并保存到数据库
         new Thread(() -> {
-            List<Passenger> passengers = passengerService.getPassengers(username);
-            passengerService.saveOrUpdatePassengers(passengers);
+            List<Passenger> passengers = PersonalCenter.getPassengers(username);
+            saveOrUpdatePassengers(passengers);
         }).start();
         respMessage.setSuccess(true);
         respMessage.setMessage("操作成功");
         return respMessage;
+    }
+
+    public void saveOrUpdatePassengers(List<Passenger> passengers) {
+        for (Passenger passenger : passengers) {
+            Passenger passenger1 = passengerRepository.findByUsernameAndName(passenger.getUsername(), passenger.getName());
+            if (passenger1 == null) {
+                passengerRepository.save(passenger);
+                LOGGER.info("添加乘客人");
+            } else {
+                passenger.setId(passenger1.getId());
+                passengerRepository.save(passenger);
+                LOGGER.info("更新乘客人");
+            }
+        }
     }
 }

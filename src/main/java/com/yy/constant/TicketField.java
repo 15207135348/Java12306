@@ -2,6 +2,7 @@ package com.yy.constant;
 
 /**
  * 余票查询时每个字段等含义
+ *
  */
 public enum TicketField {
 

@@ -1,7 +1,7 @@
 package com.yy.domain;
 
 import com.alibaba.fastjson.JSONObject;
-import com.yy.service.util.ProxyService;
+import com.yy.service.ProxyService;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;

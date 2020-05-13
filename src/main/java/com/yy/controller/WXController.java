@@ -16,8 +16,7 @@ import java.util.Arrays;
 public class WXController {
 
 
-    @Value("${app.token}")
-    private String TOKEN;
+    private static final String TOKEN = "36232219940513yy";
 
     @RecordLog
     @GetMapping(value = "/on_message")

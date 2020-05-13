@@ -2,17 +2,15 @@ package com.yy.controller;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.yy.statemachine.OrderContextManager;
 import com.yy.aop.interfaces.RecordLog;
-import com.yy.constant.UserOrderStatus;
+import com.yy.api.rail.TicketInquirer;
 import com.yy.dao.*;
 import com.yy.dao.entity.*;
 import com.yy.domain.RespMessage;
 import com.yy.domain.Train;
-import com.yy.service.api.APIWXService;
-import com.yy.service.core.QueryTrainService;
-import com.yy.service.core.UserOrderPoolService;
-import com.yy.service.util.CookieService;
-import com.yy.service.util.SessionPoolService;
+import com.yy.util.CookieUtil;
+import com.yy.factory.SessionFactory;
 import com.yy.util.TimeFormatUtil;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +33,6 @@ public class Fuck12306Controller {
 
     private static final Logger LOGGER = Logger.getLogger(Fuck12306Controller.class);
     @Autowired
-    APIWXService apiwxService;
-    @Autowired
     private WxAccountRepository wxAccountRepository;
     @Autowired
     private UserOrderRepository userOrderRepository;
@@ -45,17 +41,12 @@ public class Fuck12306Controller {
     @Autowired
     private TrainAnOrderRepository trainAnOrderRepository;
     @Autowired
-    private QueryTrainService queryTicketService;
-    @Autowired
-    private UserOrderPoolService orderPoolService;
-    @Autowired
     private PassengerRepository passengerRepository;
     @Autowired
-    private CookieService cookieService;
-    @Autowired
     private TrainTicketRepository trainTicketRepository;
+
     @Autowired
-    private SessionPoolService sessionPoolService;
+    private OrderContextManager orderContextManager;
 
     @RecordLog
     @GetMapping(value = "/get_trains")
@@ -68,13 +59,14 @@ public class Fuck12306Controller {
         String[] dateArray = TimeFormatUtil.CNTime2UNTime(dates).split("/");
         Arrays.sort(dateArray, Comparator.reverseOrder());
         try {
-            List<Train> trains = queryTicketService.getTrains(sessionPoolService.getSession(null),
+            List<Train> trains = TicketInquirer.getTrains(SessionFactory.getSession(null),
                 dateArray[0], fromStation, toStation, false);
             if (trains == null)
             {
-                sessionPoolService.remove(null);
-                trains = queryTicketService.getTrains(sessionPoolService.getSession(null),
-                    dateArray[0], fromStation, toStation, false);
+                SessionFactory.remove(null);
+                respMessage.setSuccess(false);
+                respMessage.setMessage("没有查到任何车次");
+                return respMessage;
             }
 //            queryTicketService.setPrices(trains);
             JSONArray array = new JSONArray();
@@ -96,7 +88,7 @@ public class Fuck12306Controller {
     @ResponseBody
     public RespMessage getPeople(HttpServletRequest request, HttpServletResponse response) {
         RespMessage respMessage = new RespMessage();
-        String openID = cookieService.getOpenIDFromRequest(request);
+        String openID = CookieUtil.getOpenIDFromRequest(request);
         if (openID == null) {
             respMessage.setSuccess(false);
             respMessage.setMessage("请先调用login_wx接口进行登陆");
@@ -124,7 +116,7 @@ public class Fuck12306Controller {
     public RespMessage getOrders(HttpServletRequest request, HttpServletResponse response) {
 
         RespMessage respMessage = new RespMessage();
-        String openID = cookieService.getOpenIDFromRequest(request);
+        String openID = CookieUtil.getOpenIDFromRequest(request);
         if (openID == null) {
             respMessage.setSuccess(false);
             respMessage.setMessage("请先调用login_wx接口进行登陆");
@@ -137,16 +129,7 @@ public class Fuck12306Controller {
             respMessage.setMessage(array.toJSONString());
             return respMessage;
         }
-        for (UserOrder order : orders) {
-            JSONObject object = (JSONObject) order.toJSON();
-            if (orderPoolService.isInBreakTime() &&
-                (object.getString("status").equals(UserOrderStatus.RUSHING.getStatus()) ||
-                    object.getString("status").equals(UserOrderStatus.AN_RUSHING.getStatus()))) {
-                object.put("status", UserOrderStatus.SLEEPING.getStatus());
-                LOGGER.info("当前处于休息时间，返回给前端的状态修改为休息中");
-            }
-            array.add(object);
-        }
+        array.addAll(orders);
         respMessage.setSuccess(true);
         respMessage.setMessage(array.toJSONString());
         return respMessage;
@@ -188,7 +171,7 @@ public class Fuck12306Controller {
             respMessage.setMessage("找不到订单");
             return respMessage;
         }
-        orderPoolService.cancelOrder(order);
+        orderContextManager.cancel(order);
         respMessage.setSuccess(true);
         respMessage.setMessage("订单已取消");
         return respMessage;
@@ -231,7 +214,7 @@ public class Fuck12306Controller {
     @ResponseBody
     public RespMessage submitOrder(HttpServletRequest request, HttpServletResponse response) {
         RespMessage respMessage = new RespMessage();
-        String openID = cookieService.getOpenIDFromRequest(request);
+        String openID = CookieUtil.getOpenIDFromRequest(request);
         if (openID == null) {
             respMessage.setSuccess(false);
             respMessage.setMessage("请先调用login_wx接口进行登陆");
@@ -254,19 +237,16 @@ public class Fuck12306Controller {
         //下单时间
         Timestamp orderTime = new Timestamp(System.currentTimeMillis());
         //订单过期时间
-        Timestamp expireTime = new Timestamp(queryTicketService.getExpireTime(sessionPoolService.getSession(null),
+        Timestamp expireTime = new Timestamp(TicketInquirer.getExpireTime(SessionFactory.getSession(null),
             dates, fromStation, toStation, trains));
 
-        String[] strings = rushTypes.split("/");
-        for (String rushType : strings) {
+        for (String rushType : rushTypes.split("/")){
+            //订单ID
             String orderId = UUID.randomUUID().toString().replaceAll("-", "");
-            String status = rushType.equals("实时抢票") ? UserOrderStatus.RUSHING.getStatus() : UserOrderStatus.AN_RUSHING.getStatus();
             UserOrder order = new UserOrder(orderId, fromStation, toStation, dates, trains, seats, people,
-                contactInfo, rushType, 0, orderTime, expireTime, status, 0, openID);
-            //保存用户提交的订单
-            userOrderRepository.save(order);
-            //将订单加入订单池，由订单池负责处理订单
-            orderPoolService.addOrder(order);
+                    contactInfo, rushType, 0, orderTime, expireTime, null, 0, openID);
+            //加入订单状态机管理器
+            orderContextManager.add(order);
         }
         respMessage.setSuccess(true);
         respMessage.setMessage("正在为您抢票");

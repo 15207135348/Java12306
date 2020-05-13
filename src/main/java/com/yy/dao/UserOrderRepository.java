@@ -12,8 +12,13 @@ import java.util.List;
 
 @Repository
 public interface UserOrderRepository extends JpaRepository<UserOrder,Integer> {
-    List<UserOrder> findAllByOpenId(String openId);
+
+
     UserOrder findByOrderId(String orderId);
+
+    List<UserOrder> findAllByRushType(String rushType);
+
+    List<UserOrder> findAllByOpenId(String openId);
 
     @Query("select queryCount from UserOrder where orderId=:orderId")
     int findQueryCountByOrderId(@Param("orderId") String orderId);
@@ -36,4 +41,6 @@ public interface UserOrderRepository extends JpaRepository<UserOrder,Integer> {
     @Transactional
     @Query("delete from UserOrder where orderId =:orderId")
     void deleteByOrderId(@Param("orderId") String orderId);
+
+
 }
