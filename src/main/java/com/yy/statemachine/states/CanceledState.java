@@ -1,21 +1,20 @@
 package com.yy.statemachine.states;
 
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.AbstractOrderState;
 import com.yy.statemachine.OrderAction;
+import com.yy.statemachine.OrderState;
 
-public class CanceledState extends AbstractOrderState {
+public class CanceledState implements OrderState {
 
-
-    public CanceledState(String stateName) {
-        super(stateName);
-    }
 
     @Override
     public void entry(AbstractOrderContext context) {
+
         OrderAction action = context.getAction();
         //更新订单状态
         action.update(context);
+
+        context.stop();
     }
 
     @Override
@@ -44,12 +43,12 @@ public class CanceledState extends AbstractOrderState {
     }
 
     @Override
-    public void conflict(AbstractOrderContext context) {
+    public void found(AbstractOrderContext context) {
 
     }
 
     @Override
-    public void found(AbstractOrderContext context) {
+    public void conflict(AbstractOrderContext context) {
 
     }
 

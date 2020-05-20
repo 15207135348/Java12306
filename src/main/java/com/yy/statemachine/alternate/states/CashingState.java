@@ -2,25 +2,33 @@ package com.yy.statemachine.alternate.states;
 
 
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.alternate.AbstractAlternateOrderState;
 import com.yy.statemachine.alternate.AlternateOrderAction;
+import com.yy.statemachine.alternate.AlternateOrderState;
+import com.yy.statemachine.states.CanceledState;
+import com.yy.statemachine.states.SleepingState;
 
-public class CashingState extends AbstractAlternateOrderState {
+public class CashingState implements AlternateOrderState {
 
-    public CashingState(String stateName) {
-        super(stateName);
-    }
 
     @Override
     public void entry(AbstractOrderContext context) {
+
+        if (!context.isRunning()) {
+            return;
+        }
+
         //更新订单状态
         AlternateOrderAction action = (AlternateOrderAction) context.getAction();
         action.update(context);
         //监测是否兑现成功
-        if (action.checkCash(context)){
+        if (action.checkCash(context)) {
+            //保存已支付的订单
+            action.saveCashedOrder(context);
             cashSuccess(context);
-        }else {
-            cashFailed(context);
+        } else {
+            if (!(context.getState() instanceof SleepingState) && !(context.getState() instanceof CanceledState)) {
+                cashFailed(context);
+            }
         }
     }
 
@@ -42,6 +50,10 @@ public class CashingState extends AbstractAlternateOrderState {
     @Override
     public void cancel(AbstractOrderContext context) {
 
+        //先向12306请求，取消未兑现订单
+        AlternateOrderAction action = (AlternateOrderAction) context.getAction();
+        action.cancelUncashedOrder(context);
+        context.setState(canceledState);
     }
 
     @Override

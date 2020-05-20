@@ -6,13 +6,13 @@ import com.yy.api.rail.OrderSubmitter;
 import com.yy.dao.*;
 import com.yy.dao.entity.TrainAnOrder;
 import com.yy.dao.entity.WxAccount;
+import com.yy.exception.UnLoginException;
 import com.yy.exception.UnfinishedOrderException;
-import com.yy.observer.FindResult;
+import com.yy.domain.FindResult;
 import com.yy.observer.Finder;
 import com.yy.service.SendMsgService;
 import com.yy.statemachine.AbstractOrderContext;
 import com.yy.statemachine.OrderAction;
-import com.yy.statemachine.OrderState;
 import com.yy.statemachine.alternate.states.AlternatePayingState;
 import com.yy.util.SleepUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,26 +26,14 @@ public class AlternateOrderAction extends OrderAction {
     @Autowired
     private SendMsgService sendMsgService;
     @Autowired
-    private UserOrderRepository userOrderRepository;
-    @Autowired
     private WxAccountRepository wxAccountRepository;
     @Autowired
     private TrainAnOrderRepository trainAnOrderRepository;
+    @Autowired
+    private TrainTicketRepository trainTicketRepository;
+    @Autowired
+    private TrainOrderRepository trainOrderRepository;
 
-    /**
-     * 数据库更新订单状态
-     *
-     * @param context
-     */
-    public boolean update(AbstractOrderContext context) {
-        OrderState state = context.getState();
-        if (!(state instanceof AbstractAlternateOrderState)){
-            return super.update(context);
-        }
-        context.getOrder().setStatus(((AbstractAlternateOrderState) state).getStateName());
-        userOrderRepository.save(context.getOrder());
-        return true;
-    }
 
     public boolean findAlternate(AbstractOrderContext context) {
         return Finder.findAlternate(context).isFound();
@@ -53,7 +41,6 @@ public class AlternateOrderAction extends OrderAction {
 
     /**
      * 提交候补订单
-     *
      * @param context
      * @return
      */
@@ -72,6 +59,11 @@ public class AlternateOrderAction extends OrderAction {
         );
     }
 
+    /**
+     * 保存候补订单
+     * @param context
+     * @return
+     */
     public boolean saveUnpaidAlternateOrder(AbstractOrderContext context) {
         WxAccount wxAccount = wxAccountRepository.findByOpenId(context.getOrder().getOpenId());
 
@@ -94,6 +86,11 @@ public class AlternateOrderAction extends OrderAction {
     }
 
 
+    /**
+     * 通知前往支付候补订单
+     * @param context
+     * @return
+     */
     public boolean notifyAlternatePay(AbstractOrderContext context) {
         TrainAnOrder trainAnOrder = trainAnOrderRepository.findByUserOrderId(context.getOrder().getOrderId());
         if (trainAnOrder == null) {
@@ -106,20 +103,96 @@ public class AlternateOrderAction extends OrderAction {
         return true;
     }
 
+    /**
+     * 检查候补订单是否支付
+     * @param context
+     * @return
+     */
     public boolean checkAlternatePay(AbstractOrderContext context) {
-        return false;
+
+        WxAccount wxAccount = context.getWxAccount();
+        String orderId = context.getOrder().getOrderId();
+        TrainAnOrder trainAnOrder = trainAnOrderRepository.findByUserOrderId(orderId);
+        boolean isUnHonourHOrder = false;
+        long expiredTime = System.currentTimeMillis() + 30 * 60000;
+        while (context.isRunning() && System.currentTimeMillis() < expiredTime) {
+            isUnHonourHOrder = OrderCenter.isUnHonourHOrder(wxAccount.getUsername(), wxAccount.getPassword(), trainAnOrder.getReserveNo());
+            if (isUnHonourHOrder) {
+                break;
+            }
+            //30秒钟检测一次
+            SleepUtil.sleep(30000);
+        }
+        return isUnHonourHOrder;
     }
 
+    /**
+     * 取消未支付的候补订单
+     * @param context
+     * @return
+     */
     public boolean cancelUnpaidAlternateOrder(AbstractOrderContext context) {
-        return false;
+        WxAccount wxAccount = context.getWxAccount();
+        String orderId = context.getOrder().getOrderId();
+        TrainAnOrder trainAnOrder = trainAnOrderRepository.findByUserOrderId(orderId);
+        return OrderCenter.cancelNoPaidAnOrder(wxAccount.getUsername(), wxAccount.getPassword(), trainAnOrder.getReserveNo());
     }
 
+    /**
+     * 检查是否兑现成功
+     * @param context
+     * @return
+     */
     public boolean checkCash(AbstractOrderContext context) {
-        return false;
+        WxAccount wxAccount = context.getWxAccount();
+        String orderId = context.getOrder().getOrderId();
+        TrainAnOrder trainAnOrder = trainAnOrderRepository.findByUserOrderId(orderId);
+        long expiredTime = context.getOrder().getExpireTime().getTime();
+        String orderID = null;
+        while (context.isRunning() && System.currentTimeMillis() < expiredTime) {
+            orderID = OrderCenter.getCashedHOrderID(wxAccount.getUsername(), wxAccount.getPassword(), trainAnOrder.getReserveNo());
+            if (orderID != null) {
+                break;
+            }
+            //30秒钟检测一次
+            SleepUtil.sleep(30000);
+        }
+        return orderID != null;
     }
 
-    public boolean cancelUncashedOrder(AbstractOrderContext context) {
-        return false;
+    /**
+     * 保存已兑现的订单
+     * @param context
+     * @return
+     */
+    public boolean saveCashedOrder(AbstractOrderContext context) {
+        WxAccount wxAccount = context.getWxAccount();
+        String orderId = context.getOrder().getOrderId();
+        TrainAnOrder trainAnOrder = trainAnOrderRepository.findByUserOrderId(orderId);
+        String orderID = OrderCenter.getCashedHOrderID(wxAccount.getUsername(), wxAccount.getPassword(), trainAnOrder.getReserveNo());
+        if (orderID == null){
+            return false;
+        }
+        OrderCenter.Result result = OrderCenter.findUntraveledOrder(wxAccount.getUsername(), wxAccount.getPassword(), orderID, trainAnOrder);
+        if (result ==null){
+            return false;
+        }
+        trainOrderRepository.save(result.getTrainOrder());
+        trainTicketRepository.save(result.getTickets());
+        return true;
+    }
+
+
+    /**
+     * 取消未兑现的候补订单
+     * @param context
+     * @return 退款金额
+     */
+    public String cancelUncashedOrder(AbstractOrderContext context) {
+        WxAccount wxAccount = context.getWxAccount();
+        String orderId = context.getOrder().getOrderId();
+        TrainAnOrder trainAnOrder = trainAnOrderRepository.findByUserOrderId(orderId);
+        return OrderCenter.cancelNoCashAnOrder(wxAccount.getUsername(), wxAccount.getPassword(), trainAnOrder.getReserveNo());
     }
 
 }

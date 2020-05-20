@@ -31,6 +31,11 @@ public class TimeFormatUtil {
         return stamp2Date(System.currentTimeMillis(), "yyyy-MM-dd");
     }
 
+    public static String getDateStr(int addDay){
+        long timestamp = System.currentTimeMillis() + addDay*3600*24;
+        return stamp2Date(timestamp, "yyyy-MM-dd");
+    }
+
     public static String CNTime2UNTime(String dates)
     {
         String[] split = dates.split("/");

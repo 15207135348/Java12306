@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class QueryHandler extends Subject<Data> implements Runnable {
+public class QueryHandler extends Subject<QueryResult> implements Runnable {
 
     private final Logger LOGGER = Logger.getLogger(QueryHandler.class);
 
@@ -61,7 +61,7 @@ public class QueryHandler extends Subject<Data> implements Runnable {
                     SessionFactory.remove(null);
                     trainList = new ArrayList<>();
                 }
-                notifyObservers(new Data(trainList, date));
+                notifyObservers(new QueryResult(trainList, date));
             } catch (Exception e) {
                 LOGGER.error(e);
             }

@@ -1,12 +1,10 @@
 package com.yy.statemachine;
 
 import com.yy.constant.RushType;
-import com.yy.statemachine.alternate.AbstractAlternateOrderState;
 import com.yy.statemachine.alternate.AlternateOrderAction;
 import com.yy.statemachine.alternate.AlternateOrderContext;
 import com.yy.statemachine.alternate.AlternateOrderState;
 import com.yy.statemachine.alternate.states.AlternateRushingState;
-import com.yy.statemachine.realtime.AbstractRealTimeOrderState;
 import com.yy.statemachine.realtime.RealTimeOrderAction;
 import com.yy.statemachine.realtime.RealTimeOrderContext;
 import com.yy.dao.UserOrderRepository;
@@ -46,19 +44,19 @@ public class OrderContextManager {
         boolean isSleepTime = timestamp.getHours() >= 23 || timestamp.getHours() <= 5;
         List<UserOrder> orders = userOrderRepository.findAllByRushType(RushType.REAL_TIME.getType());
         for (UserOrder order : orders) {
+            OrderState orderState = OrderStateManager.getOrderState(order.getStatus());
             //如果数据库中状态为休息中，但当前是抢票时间
-            if (RealTimeOrderState.sleepingState.getStateName().equals(order.getStatus()) && !isSleepTime) {
-                order.setStatus(RealTimeOrderState.realTimeRushingState.getStateName());
+            if (OrderState.sleepingState.equals(orderState) && !isSleepTime) {
+                order.setStatus(OrderStateManager.getStateName(RealTimeOrderState.realTimeRushingState));
             }
             //如果数据库中状态为实时抢票中，但是当前是睡觉时间
-            if (RealTimeOrderState.realTimeRushingState.getStateName().equals(order.getStatus()) && isSleepTime) {
-                order.setStatus(OrderState.sleepingState.getStateName());
+            if (RealTimeOrderState.realTimeRushingState.equals(orderState) && isSleepTime) {
+                order.setStatus(OrderStateManager.getStateName(OrderState.sleepingState));
             }
             //如果已过期
-            if ((RealTimeOrderState.realTimeRushingState.getStateName().equals(order.getStatus())
-                    || OrderState.sleepingState.getStateName().equals(order.getStatus()))
+            if ((RealTimeOrderState.realTimeRushingState.equals(orderState) || OrderState.sleepingState.equals(orderState))
                     && System.currentTimeMillis() >= order.getExpireTime().getTime()) {
-                order.setStatus(OrderState.failedState.getStateName());
+                order.setStatus(OrderStateManager.getStateName(OrderState.failedState));
             }
             add(order);
         }
@@ -69,19 +67,19 @@ public class OrderContextManager {
         boolean isSleepTime = timestamp.getHours() >= 23 || timestamp.getHours() <= 5;
         List<UserOrder> orders = userOrderRepository.findAllByRushType(RushType.ALTERNATE.getType());
         for (UserOrder order : orders) {
+            OrderState orderState = OrderStateManager.getOrderState(order.getStatus());
             //如果数据库中状态为休息中，但当前是抢票时间
-            if (AlternateOrderState.sleepingState.getStateName().equals(order.getStatus()) && !isSleepTime) {
-                order.setStatus(AlternateOrderState.alternateRushingState.getStateName());
+            if (OrderState.sleepingState.equals(orderState) && !isSleepTime) {
+                order.setStatus(OrderStateManager.getStateName(AlternateOrderState.alternateRushingState));
             }
             //如果数据库中但状态为实时抢票中，但是当前是睡觉时间
-            if (AlternateOrderState.alternateRushingState.getStateName().equals(order.getStatus()) && isSleepTime) {
-                order.setStatus(OrderState.sleepingState.getStateName());
+            if (AlternateOrderState.alternateRushingState.equals(orderState) && isSleepTime) {
+                order.setStatus(OrderStateManager.getStateName(OrderState.sleepingState));
             }
             //如果已过期
-            if ((AlternateOrderState.alternateRushingState.getStateName().equals(order.getStatus())
-                    || OrderState.sleepingState.getStateName().equals(order.getStatus()))
+            if ((AlternateOrderState.alternateRushingState.equals(orderState) || OrderState.sleepingState.equals(orderState))
                     && System.currentTimeMillis() >= order.getExpireTime().getTime()) {
-                order.setStatus(OrderState.failedState.getStateName());
+                order.setStatus(OrderStateManager.getStateName(OrderState.failedState));
             }
             add(order);
         }
@@ -94,7 +92,6 @@ public class OrderContextManager {
     private void resume() {
         resumeRealTimeOrder();
         resumeAlternateOrder();
-//        resumeDualChannelOrder();
         LOGGER.info("从数据库中加载未完成的订单，然后去处理订单");
     }
 
@@ -152,25 +149,20 @@ public class OrderContextManager {
     public void add(UserOrder order) {
         //恢复之前的状态
         AbstractOrderContext orderContext = null;
-        OrderState orderState = null;
         if (RushType.REAL_TIME.getType().equals(order.getRushType())) {
             orderContext = new RealTimeOrderContext(order, realTimeOrderAction);
-            orderState = AbstractRealTimeOrderState.getState(order.getStatus());
         } else if (RushType.ALTERNATE.getType().equals(order.getRushType())) {
             orderContext = new AlternateOrderContext(order, alternateOrderAction);
-            orderState = AbstractAlternateOrderState.getState(order.getStatus());
         }
-        if (orderContext != null) {
-            orderContextMap.put(order.getOrderId(), orderContext);
-            if (orderState == null) {
-                orderState = AbstractOrderState.getState(order.getStatus());
-            }
-            if (orderState == null) {
-                orderContext.start();
-            }
-            else {
-                orderContext.start(orderState);
-            }
+        if (orderContext == null) {
+            return;
+        }
+        orderContextMap.put(order.getOrderId(), orderContext);
+        OrderState orderState = OrderStateManager.getOrderState(order.getStatus());
+        if (orderState == null) {
+            orderContext.start();
+        } else {
+            orderContext.start(orderState);
         }
     }
 

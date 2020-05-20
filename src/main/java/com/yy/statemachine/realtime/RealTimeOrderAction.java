@@ -7,12 +7,11 @@ import com.yy.dao.*;
 import com.yy.dao.entity.TrainOrder;
 import com.yy.dao.entity.WxAccount;
 import com.yy.exception.UnfinishedOrderException;
-import com.yy.observer.FindResult;
+import com.yy.domain.FindResult;
 import com.yy.observer.Finder;
 import com.yy.service.SendMsgService;
 import com.yy.statemachine.AbstractOrderContext;
 import com.yy.statemachine.OrderAction;
-import com.yy.statemachine.OrderState;
 import com.yy.statemachine.realtime.states.RealTimePayingState;
 import com.yy.util.SleepUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,28 +25,9 @@ public class RealTimeOrderAction extends OrderAction {
     @Autowired
     private SendMsgService sendMsgService;
     @Autowired
-    private UserOrderRepository userOrderRepository;
-    @Autowired
-    private WxAccountRepository wxAccountRepository;
-    @Autowired
     private TrainTicketRepository trainTicketRepository;
     @Autowired
     private TrainOrderRepository trainOrderRepository;
-
-    /**
-     * 数据库更新订单状态
-     *
-     * @param context
-     */
-    public boolean update(AbstractOrderContext context) {
-        OrderState state = context.getState();
-        if (!(state instanceof AbstractRealTimeOrderState)){
-            return super.update(context);
-        }
-        context.getOrder().setStatus(((AbstractRealTimeOrderState) state).getStateName());
-        userOrderRepository.save(context.getOrder());
-        return true;
-    }
 
     /**
      * 查询是否有符合要求的车票
@@ -56,8 +36,7 @@ public class RealTimeOrderAction extends OrderAction {
      * @return
      */
     public boolean findRealTime(AbstractOrderContext context) {
-        Finder.findRealTime(context);
-        return true;
+        return Finder.findRealTime(context).isFound();
     }
 
     /**
@@ -71,8 +50,7 @@ public class RealTimeOrderAction extends OrderAction {
         if (findResult == null) {
             return false;
         }
-        WxAccount wxAccount = wxAccountRepository.findByOpenId(context.getOrder().getOpenId());
-        //提交实时订单
+        WxAccount wxAccount = context.getWxAccount();
         String sequenceNo = OrderSubmitter.submitRealTime(
                 wxAccount.getUsername(),
                 wxAccount.getPassword(),
@@ -94,7 +72,7 @@ public class RealTimeOrderAction extends OrderAction {
      */
     public boolean saveUnpaidRealTimeOrder(AbstractOrderContext context) {
 
-        WxAccount wxAccount = wxAccountRepository.findByOpenId(context.getOrder().getOpenId());
+        WxAccount wxAccount = context.getWxAccount();
 
         FindResult findResult = context.getFindResult();
         if (findResult == null) {
@@ -138,11 +116,27 @@ public class RealTimeOrderAction extends OrderAction {
      * @return 支付成功或者失败
      */
     public boolean checkRealTimePay(AbstractOrderContext context) {
-        return true;
+        WxAccount wxAccount = context.getWxAccount();
+        String orderId = context.getOrder().getOrderId();
+        TrainOrder trainOrder = trainOrderRepository.findByUserOrderId(orderId);
+        boolean isUntraveledOrder = false;
+        long expiredTime = System.currentTimeMillis() + 30 * 60000;
+        while (context.isRunning() && System.currentTimeMillis() < expiredTime) {
+            isUntraveledOrder = OrderCenter.isUntraveledOrder(wxAccount.getUsername(), wxAccount.getPassword(), trainOrder.getSequenceNo());
+            if (isUntraveledOrder) {
+                break;
+            }
+            //30秒钟检测一次
+            SleepUtil.sleep(30000);
+        }
+        return isUntraveledOrder;
     }
 
     public boolean cancelUnpaidRealTimeOrder(AbstractOrderContext context) {
-        return false;
+        WxAccount wxAccount = context.getWxAccount();
+        String orderId = context.getOrder().getOrderId();
+        TrainOrder trainOrder = trainOrderRepository.findByUserOrderId(orderId);
+        return OrderCenter.cancelNoCompleteOrder(wxAccount.getUsername(), wxAccount.getPassword(), trainOrder.getSequenceNo());
     }
 
 }

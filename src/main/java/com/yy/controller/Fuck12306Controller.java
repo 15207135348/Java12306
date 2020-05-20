@@ -129,7 +129,9 @@ public class Fuck12306Controller {
             respMessage.setMessage(array.toJSONString());
             return respMessage;
         }
-        array.addAll(orders);
+        for (UserOrder order : orders){
+            array.add(order.toJSON());
+        }
         respMessage.setSuccess(true);
         respMessage.setMessage(array.toJSONString());
         return respMessage;

@@ -1,14 +1,10 @@
 package com.yy.statemachine.states;
 
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.AbstractOrderState;
 import com.yy.statemachine.OrderAction;
+import com.yy.statemachine.OrderState;
 
-public class FinishedState extends AbstractOrderState {
-
-    public FinishedState(String stateName) {
-        super(stateName);
-    }
+public class FinishedState implements OrderState {
 
     @Override
     public void entry(AbstractOrderContext context) {
@@ -17,6 +13,7 @@ public class FinishedState extends AbstractOrderState {
         action.update(context);
         //通知完成
         action.notifyFinished(context);
+        context.stop();
     }
 
     @Override
@@ -45,12 +42,12 @@ public class FinishedState extends AbstractOrderState {
     }
 
     @Override
-    public void conflict(AbstractOrderContext context) {
+    public void found(AbstractOrderContext context) {
 
     }
 
     @Override
-    public void found(AbstractOrderContext context) {
+    public void conflict(AbstractOrderContext context) {
 
     }
 

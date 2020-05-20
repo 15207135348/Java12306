@@ -1,7 +1,6 @@
 package com.yy.statemachine.realtime.states;
 
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.realtime.AbstractRealTimeOrderState;
 import com.yy.statemachine.realtime.RealTimeOrderAction;
 import com.yy.statemachine.realtime.RealTimeOrderState;
 
@@ -9,22 +8,22 @@ import com.yy.statemachine.realtime.RealTimeOrderState;
 /**
  * 抢票中状态下的行为
  */
-public class RealTimeRushingState extends AbstractRealTimeOrderState {
+public class RealTimeRushingState implements RealTimeOrderState {
 
 
-    public RealTimeRushingState(String orderName) {
-        super(orderName);
-    }
     @Override
     public void entry(AbstractOrderContext context) {
-
+        if (!context.isRunning()){
+            return;
+        }
         RealTimeOrderAction realTimeAction = (RealTimeOrderAction) context.getAction();
         //更新订单状态
         realTimeAction.update(context);
         //阻塞，直到找到余票或者可以候补
-        realTimeAction.findRealTime(context);
-        //触发found事件
-        found(context);
+        if(realTimeAction.findRealTime(context)){
+            //触发found事件
+            found(context);
+        }
     }
 
     @Override

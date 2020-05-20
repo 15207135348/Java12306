@@ -2,26 +2,28 @@ package com.yy.statemachine.alternate.states;
 
 
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.alternate.AbstractAlternateOrderState;
 import com.yy.statemachine.alternate.AlternateOrderAction;
 import com.yy.statemachine.alternate.AlternateOrderState;
 
 
-public class AlternateRushingState extends AbstractAlternateOrderState {
+public class AlternateRushingState implements AlternateOrderState {
 
-    public AlternateRushingState(String stateName) {
-        super(stateName);
-    }
 
     @Override
     public void entry(AbstractOrderContext context) {
+
+        if (!context.isRunning()){
+            return;
+        }
+
         //更新订单状态
         AlternateOrderAction action = (AlternateOrderAction) context.getAction();
         action.update(context);
         //阻塞，直到找到候补车票
-        action.findAlternate(context);
-        //触发found事件
-        found(context);
+        if(action.findAlternate(context)){
+            //触发found事件
+            found(context);
+        }
     }
 
     @Override

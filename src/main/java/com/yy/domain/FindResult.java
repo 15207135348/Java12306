@@ -1,4 +1,4 @@
-package com.yy.observer;
+package com.yy.domain;
 
 import com.yy.domain.Train;
 

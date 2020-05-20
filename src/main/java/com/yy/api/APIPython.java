@@ -6,11 +6,13 @@ import org.apache.log4j.Logger;
 
 import java.util.List;
 
+import static com.yy.config.PythonConfig.ANSWER_URL;
+
 public class APIPython {
 
     private static final Logger LOGGER = Logger.getLogger(APIPython.class);
 
-    private static final String ANSWER_URL = "http://127.0.0.1:5000/answer";
+
 
     public static String getAnswer(String base64Image) {
         Object [] params = new Object[]{"base64_image"};

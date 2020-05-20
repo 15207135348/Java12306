@@ -5,6 +5,8 @@ import com.yy.factory.ThreadPoolFactory;
 import com.yy.statemachine.AbstractOrderContext;
 import com.yy.statemachine.OrderAction;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 
 public class RealTimeOrderContext extends AbstractOrderContext {
 

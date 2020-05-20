@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.yy.api.API12306;
 import com.yy.domain.Passenger;
 import com.yy.domain.Session;
+import com.yy.exception.UnLoginException;
 import com.yy.exception.UnfinishedOrderException;
 import com.yy.factory.SessionFactory;
 import com.yy.util.SleepUtil;
@@ -51,7 +52,8 @@ public class OrderSubmitter {
                                         String fromStation,
                                         String toStation,
                                         List<String> passengerNames,
-                                        List<String> seatTypes) throws UnfinishedOrderException {
+                                        List<String> seatTypes)
+            throws UnfinishedOrderException {
 
         Session session = SessionFactory.getSession(username);
         try {
@@ -62,11 +64,10 @@ public class OrderSubmitter {
                 SleepUtil.sleepRandomTime(1000, 2000);
                 success = API12306.checkLogin(session);
                 if (!success) {
-                    LOGGER.error("submit：登陆失败，提交订单失败");
+                    LOGGER.error("queryTrainOrder：登陆失败，获取不到火车订单信息");
                     return null;
                 }
             }
-            SleepUtil.sleepRandomTime(500, 1000);
             //提交下单请求
             success = API12306.submitOrderRequest(session, secretStr, trainDate, TimeFormatUtil.currentDate(), fromStation, toStation);
             if (!success) {
@@ -110,7 +111,7 @@ public class OrderSubmitter {
             SleepUtil.sleepRandomTime(500, 1000);
             //订单结果
             String orderId = null;
-            for (int i = 0; i <= passengerList.size() * 5; ++i) {
+            for (int i = 0; i <= 5; ++i) {
                 orderId = API12306.queryOrderWaitTime(session, object.getString("token"));
                 if (orderId != null) {
                     break;
@@ -149,7 +150,8 @@ public class OrderSubmitter {
                                           String password,
                                           String secretStr,
                                           List<String> seatTypes,
-                                          List<String> passengerNames) throws UnfinishedOrderException {
+                                          List<String> passengerNames)
+            throws UnfinishedOrderException {
 
         //有不订单一次最多只能有3个乘客
         while (passengerNames.size() > 3) {
@@ -167,7 +169,7 @@ public class OrderSubmitter {
                 SleepUtil.sleepRandomTime(1000, 2000);
                 success = API12306.checkLogin(session);
                 if (!success) {
-                    LOGGER.error("submitByAfterNate：登陆失败，提交订单失败");
+                    LOGGER.error("queryTrainOrder：登陆失败，获取不到火车订单信息");
                     return false;
                 }
             }
@@ -239,11 +241,8 @@ public class OrderSubmitter {
                 LOGGER.warn("queryANQueue失败");
                 return false;
             }
-        } catch (UnfinishedOrderException e){
+        } catch (UnfinishedOrderException e) {
             throw e;
-        } catch (Exception e) {
-            LOGGER.error(e);
-            return false;
         }
         return true;
     }

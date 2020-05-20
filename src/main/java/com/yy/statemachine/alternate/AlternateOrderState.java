@@ -9,10 +9,10 @@ public interface AlternateOrderState extends OrderState {
     /**
      * 定义state
      */
-    AlternateRushingState alternateRushingState = new AlternateRushingState("候补抢票中");
-    AlternateSubmittingState alternateSubmittingState = new AlternateSubmittingState("候补提交中");
-    AlternatePayingState alternatePayingState = new AlternatePayingState("候补待支付");
-    CashingState cashingState = new CashingState("待兑现");
+    AlternateRushingState alternateRushingState = new AlternateRushingState();
+    AlternateSubmittingState alternateSubmittingState = new AlternateSubmittingState();
+    AlternatePayingState alternatePayingState = new AlternatePayingState();
+    CashingState cashingState = new CashingState();
 
     //候补兑现成功
     void cashSuccess(AbstractOrderContext context);

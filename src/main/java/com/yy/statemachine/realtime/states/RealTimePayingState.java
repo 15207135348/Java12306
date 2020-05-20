@@ -1,18 +1,21 @@
 package com.yy.statemachine.realtime.states;
 
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.realtime.AbstractRealTimeOrderState;
 import com.yy.statemachine.realtime.RealTimeOrderAction;
 import com.yy.statemachine.realtime.RealTimeOrderState;
+import com.yy.statemachine.states.CanceledState;
+import com.yy.statemachine.states.SleepingState;
 
-public class RealTimePayingState extends AbstractRealTimeOrderState {
+public class RealTimePayingState implements RealTimeOrderState {
 
-    public RealTimePayingState(String orderName) {
-        super(orderName);
-    }
 
     @Override
     public void entry(AbstractOrderContext context) {
+
+        if (!context.isRunning()) {
+            return;
+        }
+
         RealTimeOrderAction action = (RealTimeOrderAction) context.getAction();
         //更新订单状态
         action.update(context);
@@ -22,10 +25,12 @@ public class RealTimePayingState extends AbstractRealTimeOrderState {
         action.notifyRealTimePay(context);
         //实时监测用户是否支付
         boolean success = action.checkRealTimePay(context);
-        if (success){
+        if (success) {
             paySuccess(context);
-        }else {
-            payFailed(context);
+        } else {
+            if (!(context.getState() instanceof SleepingState) && !(context.getState() instanceof CanceledState)){
+                payFailed(context);
+            }
         }
     }
 
@@ -33,7 +38,7 @@ public class RealTimePayingState extends AbstractRealTimeOrderState {
     public void exit(AbstractOrderContext context) {
 
     }
-    
+
     @Override
     public void sleep(AbstractOrderContext context) {
 
@@ -47,6 +52,8 @@ public class RealTimePayingState extends AbstractRealTimeOrderState {
     @Override
     public void cancel(AbstractOrderContext context) {
         //先向12306请求，取消未支付订单
+        RealTimeOrderAction action = (RealTimeOrderAction) context.getAction();
+        action.cancelUnpaidRealTimeOrder(context);
 
         //再讲订单状态设置未已取消
         context.setState(canceledState);

@@ -6,21 +6,15 @@ import com.yy.dao.entity.WxAccount;
 import com.yy.util.HttpClient;
 import org.apache.http.NameValuePair;
 import org.apache.log4j.Logger;
+import static com.yy.config.WeChatConfig.*;
 
 import java.util.List;
+
 
 public class APIWeChat {
 
     private static final Logger LOGGER = Logger.getLogger(APIWeChat.class);
 
-    private static final String appID = "wxb81ef370325715b1";
-    private static final String appSecret = "31bb52918104819c42b6e99b0c65e1c5";
-    private static final String CODE2SESSION_URL = "https://api.weixin.qq.com/sns/jscode2session";
-
-    private static final String GER_ACCESS_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token";
-    private static final String SEND_MSG_URL = "https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=%s";
-    private static final String templateCommonTicket = "K_hAQJeBiVnBwblrF6lB0qZthvlaNFtC_20RgYM3HHc";
-    private static final String templateAlternateTicket = "K_hAQJeBiVnBwblrF6lB0pYtVX5ag5-D2sRikUtoouA";
 
     public static WxAccount code2Session(String code) throws Exception {
         Object [] params = new Object[]{"appid", "secret", "js_code", "grant_type"};

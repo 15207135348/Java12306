@@ -8,8 +8,8 @@ public interface RealTimeOrderState extends OrderState {
     /**
      * 定义state
      */
-    RealTimeRushingState realTimeRushingState = new RealTimeRushingState("实时抢票中");
-    RealTimeSubmittingState realTimeSubmittingState = new RealTimeSubmittingState("实时提交中");
-    RealTimePayingState realTimePayingState = new RealTimePayingState("实时待支付");
+    RealTimeRushingState realTimeRushingState = new RealTimeRushingState();
+    RealTimeSubmittingState realTimeSubmittingState = new RealTimeSubmittingState();
+    RealTimePayingState realTimePayingState = new RealTimePayingState();
 
 }

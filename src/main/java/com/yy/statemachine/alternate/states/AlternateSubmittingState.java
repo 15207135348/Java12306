@@ -3,20 +3,18 @@ package com.yy.statemachine.alternate.states;
 
 import com.yy.exception.UnfinishedOrderException;
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.alternate.AbstractAlternateOrderState;
 import com.yy.statemachine.alternate.AlternateOrderAction;
 import com.yy.statemachine.alternate.AlternateOrderState;
 
-public class AlternateSubmittingState extends AbstractAlternateOrderState {
+public class AlternateSubmittingState implements AlternateOrderState {
 
-
-    public AlternateSubmittingState(String stateName) {
-        super(stateName);
-    }
 
     @Override
     public void entry(AbstractOrderContext context) {
 
+        if (!context.isRunning()){
+            return;
+        }
         AlternateOrderAction alternateAction = (AlternateOrderAction) context.getAction();
         try {
             if (alternateAction.submitAlternate(context)) {
@@ -27,7 +25,6 @@ public class AlternateSubmittingState extends AbstractAlternateOrderState {
         } catch (UnfinishedOrderException e) {
             conflict(context);
         }
-
     }
 
     @Override
@@ -67,7 +64,13 @@ public class AlternateSubmittingState extends AbstractAlternateOrderState {
 
     @Override
     public void submitFailed(AbstractOrderContext context) {
-        context.setState(alternateRushingState);
+        context.setSubmitFailedCount(context.getSubmitFailedCount());
+        //如果提交失败的次数大于5次，则结束
+        if (context.getSubmitFailedCount() > 5){
+            context.setState(failedState);
+        }else {
+            context.setState(alternateRushingState);
+        }
     }
 
     @Override

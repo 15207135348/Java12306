@@ -2,18 +2,21 @@ package com.yy.statemachine.alternate.states;
 
 
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.alternate.AbstractAlternateOrderState;
 import com.yy.statemachine.alternate.AlternateOrderAction;
+import com.yy.statemachine.alternate.AlternateOrderState;
+import com.yy.statemachine.states.CanceledState;
+import com.yy.statemachine.states.SleepingState;
 
-public class AlternatePayingState extends AbstractAlternateOrderState {
+public class AlternatePayingState implements AlternateOrderState {
 
-
-    public AlternatePayingState(String stateName) {
-        super(stateName);
-    }
 
     @Override
     public void entry(AbstractOrderContext context) {
+
+        if (!context.isRunning()){
+            return;
+        }
+
         AlternateOrderAction action = (AlternateOrderAction) context.getAction();
         //更新订单状态
         action.update(context);
@@ -26,7 +29,9 @@ public class AlternatePayingState extends AbstractAlternateOrderState {
         if (success){
             paySuccess(context);
         }else {
-            payFailed(context);
+            if (!(context.getState() instanceof SleepingState) && !(context.getState() instanceof CanceledState)){
+                payFailed(context);
+            }
         }
     }
 
@@ -48,6 +53,11 @@ public class AlternatePayingState extends AbstractAlternateOrderState {
     @Override
     public void cancel(AbstractOrderContext context) {
 
+        //先向12306请求，取消未支付订单
+        AlternateOrderAction action = (AlternateOrderAction) context.getAction();
+        action.cancelUnpaidAlternateOrder(context);
+
+        context.setState(canceledState);
     }
 
     @Override

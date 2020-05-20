@@ -41,7 +41,7 @@ public class ProxyService {
 
     //获取https类型的代理
     public static HttpHost getHttpsProxy() {
-//        HttpHost httpHost = null;
+        HttpHost httpHost = null;
 //        if (!httpHostMap.isEmpty())
 //        {
 //            int pos = random.nextInt(httpHostMap.size());

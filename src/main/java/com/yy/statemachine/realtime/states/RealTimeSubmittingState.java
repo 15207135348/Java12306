@@ -2,19 +2,16 @@ package com.yy.statemachine.realtime.states;
 
 import com.yy.exception.UnfinishedOrderException;
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.realtime.AbstractRealTimeOrderState;
 import com.yy.statemachine.realtime.RealTimeOrderAction;
+import com.yy.statemachine.realtime.RealTimeOrderState;
 
-public class RealTimeSubmittingState extends AbstractRealTimeOrderState {
-
-    public RealTimeSubmittingState(String orderName) {
-        super(orderName);
-    }
-
+public class RealTimeSubmittingState implements RealTimeOrderState {
 
     @Override
     public void entry(AbstractOrderContext context) {
-
+        if (!context.isRunning()){
+            return;
+        }
         RealTimeOrderAction realTimeAction = (RealTimeOrderAction) context.getAction();
         try {
             if (realTimeAction.submitRealTime(context)) {

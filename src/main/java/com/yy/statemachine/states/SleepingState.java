@@ -1,22 +1,18 @@
 package com.yy.statemachine.states;
 
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.AbstractOrderState;
 import com.yy.statemachine.OrderAction;
+import com.yy.statemachine.OrderState;
 
 
-public class SleepingState extends AbstractOrderState {
-
-    public SleepingState(String stateName) {
-        super(stateName);
-    }
+public class SleepingState implements OrderState {
 
     @Override
     public void entry(AbstractOrderContext context) {
 
         OrderAction action = context.getAction();
         action.update(context);
-
+        context.stop();
     }
 
     @Override
@@ -36,7 +32,7 @@ public class SleepingState extends AbstractOrderState {
 
     @Override
     public void cancel(AbstractOrderContext context) {
-
+        context.setState(canceledState);
     }
 
     @Override
@@ -45,12 +41,12 @@ public class SleepingState extends AbstractOrderState {
     }
 
     @Override
-    public void conflict(AbstractOrderContext context) {
+    public void found(AbstractOrderContext context) {
 
     }
 
     @Override
-    public void found(AbstractOrderContext context) {
+    public void conflict(AbstractOrderContext context) {
 
     }
 

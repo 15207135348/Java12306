@@ -5,11 +5,11 @@ import com.yy.statemachine.states.*;
 
 public interface OrderState {
 
-    SleepingState sleepingState = new SleepingState("休息中");
-    CanceledState canceledState = new CanceledState("已取消");
-    FailedState failedState = new FailedState("抢票失败");
-    FinishedState finishedState = new FinishedState("已完成");
-    ConflictState conflictState = new ConflictState("与未完成订单冲突");
+    SleepingState sleepingState = new SleepingState();
+    CanceledState canceledState = new CanceledState();
+    FailedState failedState = new FailedState();
+    FinishedState finishedState = new FinishedState();
+    ConflictState conflictState = new ConflictState();
 
     /**
      * 定义translation事件
@@ -32,11 +32,11 @@ public interface OrderState {
     //订单过期事件（内部触发）
     void expire(AbstractOrderContext context);
 
-    //与未完成的订单发生冲突事件
-    void conflict(AbstractOrderContext context);
-
     //有余票，提交订单（内部触发）
     void found(AbstractOrderContext context);
+
+    //与未完成的订单发生冲突事件
+    void conflict(AbstractOrderContext context);
 
     //提交失败事件（内部触发）
     void submitFailed(AbstractOrderContext context);

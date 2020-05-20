@@ -15,6 +15,7 @@ import com.yy.util.TimeFormatUtil;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.http.NameValuePair;
 import org.apache.log4j.Logger;
+
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -29,47 +30,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class API12306 {
+import static com.yy.config.RailWayConfig.*;
 
+public class API12306 {
     private static final Logger LOGGER = Logger.getLogger(API12306.class);
 
-    private static final String GET_STATIONS_URL = "https://kyfw.12306.cn/otn/resources/js/framework/station_name.js";
-    //与登陆相关
-    private static final String GET_JS_URL = "https://kyfw.12306.cn/otn/HttpZF/GetJS";
-    private static final String LOG_DEVICE_URL = "https://kyfw.12306.cn/otn/HttpZF/logdevice";
-    private static final String IMAGE_URL = "https://kyfw.12306.cn/passport/captcha/captcha-image64?login_site=E&module=login&rand=sjrand&%d&callback=jQuery19108016482864806321_1554298927290&_=1554298927293";
-    private static final String CHECK_ANSWER_URL = "https://kyfw.12306.cn/passport/captcha/captcha-check?callback=jQuery19108016482864806321_1554298927290&answer=%s&rand=sjrand&login_site=E&_=%d";
-    private static final String LOGIN_URL = "https://kyfw.12306.cn/passport/web/login";
-    private static final String UAMTK_URL = "https://kyfw.12306.cn/passport/web/auth/uamtk";
-    private static final String UAMAUTHCLIENT_URL = "https://kyfw.12306.cn/otn/uamauthclient";
-    private static final String CHECK_LOGIN_URL = "https://kyfw.12306.cn/otn/login/checkUser";
-    //与查票相关
-    private static final String TICKET_URL = "https://kyfw.12306.cn/otn/%s?leftTicketDTO.train_date=%s&leftTicketDTO.from_station=%s&leftTicketDTO.to_station=%s&purpose_codes=ADULT";
-    private static final String LEFT_TICKET_INIT_URL = "https://kyfw.12306.cn/otn/leftTicket/init";
-    private static final String TICKET_PRICES_URL = "https://kyfw.12306.cn/otn/leftTicket/queryTicketPriceFL?train_no=%s&from_station_no=%s&to_station_no=%s&seat_types=%s&train_date=%s";
-    private static final String TICKET_PRICES_INIT_URL = "https://kyfw.12306.cn/otn/leftTicket/queryTicketPrice?train_no=%s&from_station_no=%s&to_station_no=%s&seat_types=%s&train_date=%s";
-    //与获取乘客信息相关
-    private static final String PASSENGERS_URL = "https://kyfw.12306.cn/otn/passengers/query";
-    //与下单相关
-    private static final String SUBMIT_ORDER_REQUEST_URL = "https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest";
-    private static final String INIT_DC_URL = "https://kyfw.12306.cn/otn/confirmPassenger/initDc";
-    private static final String PASSENGERS_WITH_TOKEN_URL = "https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs";
-    private static final String CHECK_ORDER_INFO_URL = "https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo";
-    private static final String GET_QUEUE_COUNT_URL = "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount";
-    private static final String CONFIRM_SINGLE_FOR_QUEUE_URL = "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue";
-    private static final String QUERY_ORDER_WAIT_TIME_URL = "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?random=%d&tourFlag=dc&_json_att=&REPEAT_SUBMIT_TOKEN=%s";
-    private static final String RESULT_ORDER_FOR_QUEUE_URL = "https://kyfw.12306.cn/otn/confirmPassenger/resultOrderForDcQueue";
-    //候补订单有关
-    private static final String AN_CHECK_FACE_URL = "https://kyfw.12306.cn/otn/afterNate/chechFace";
-    private static final String AN_SUCCESS_RATE_URL = "https://kyfw.12306.cn/otn/afterNate/getSuccessRate";
-    private static final String AN_SUBMIT_ORDER_REQUEST_URL = "https://kyfw.12306.cn/otn/afterNate/submitOrderRequest";
-    private static final String AN_PASSENGER_INIT_API_URL = "https://kyfw.12306.cn/otn/afterNate/passengerInitApi";
-    private static final String AN_CONFIRM_HB_URL = "https://kyfw.12306.cn/otn/afterNate/confirmHB";
-    private static final String AN_QUERY_QUEUE = "https://kyfw.12306.cn/otn/afterNate/queryQueue";
-    //查询未完成订单
-    private static final String QUERY_NO_COMPLETE_ORDER = "https://kyfw.12306.cn/otn/queryOrder/queryMyOrderNoComplete";
-    //查询未完成的候补订单
-    private static final String QUERY_NO_COMPLETE_AN_ORDER = "https://kyfw.12306.cn/otn/afterNateOrder/queryQueue";
 
     private static Map<String, String> hashAlg(String script) {
         StringBuilder builder = new StringBuilder();
@@ -366,11 +331,11 @@ public class API12306 {
      * @throws Exception
      */
     public static boolean submitOrderRequest(Session session,
-                                      String secretStr,
-                                      String trainDate,
-                                      String backTrainDate,
-                                      String fromStation,
-                                      String toStation) throws UnfinishedOrderException {
+                                             String secretStr,
+                                             String trainDate,
+                                             String backTrainDate,
+                                             String fromStation,
+                                             String toStation) throws UnfinishedOrderException {
         try {
             secretStr = URLDecoder.decode(secretStr, "GBK");
         } catch (UnsupportedEncodingException e) {
@@ -692,7 +657,7 @@ public class API12306 {
         return submitStatus;
     }
 
-    public static String queryOrderWaitTime(Session session, String token) {
+    public static String queryOrderWaitTime(Session session, String token) throws UnfinishedOrderException {
         Object o = session.httpsGet(String.format(QUERY_ORDER_WAIT_TIME_URL, System.currentTimeMillis(), token), null);
         LOGGER.info("queryOrderWaitTime：" + o);
         if (!(o instanceof JSONObject)) {
@@ -704,6 +669,11 @@ public class API12306 {
         if (res == null) {
             LOGGER.error("queryOrderWaitTime: res.getJSONObject(\"data\") == null");
             return null;
+        }
+        String msg = res.getString("msg");
+        if (msg != null && msg.contains("已订车票与本次购票行程冲突")) {
+            LOGGER.error(msg);
+            throw new UnfinishedOrderException();
         }
         String orderId = res.getString("orderId");
         if (orderId == null) {
@@ -850,7 +820,7 @@ public class API12306 {
         return true;
     }
 
-    public static boolean queryANQueue(Session session) throws UnfinishedOrderException{
+    public static boolean queryANQueue(Session session) throws UnfinishedOrderException {
         JSONObject res;
         Map<String, String> head = new HashMap<>();
         head.put("Referer", "https://kyfw.12306.cn/otn/leftTicket/init");
@@ -876,7 +846,7 @@ public class API12306 {
             }
             if (status != 1) {
                 LOGGER.warn(String.format("queryANQueue失败：【%s】", data.getString("msg")));
-                if (data.getString("msg").contains("已订车票与本次购票行程冲突")){
+                if (data.getString("msg").contains("已订车票与本次购票行程冲突")) {
                     throw new UnfinishedOrderException();
                 }
                 SleepUtil.sleepRandomTime(500, 1000);
@@ -907,6 +877,25 @@ public class API12306 {
         }
     }
 
+    public static boolean cancelNoCompleteOrder(Session session, String sequenceNo) {
+        Object[] params = new Object[]{"sequence_no", "cancel_flag"};
+        Object[] values = new Object[]{sequenceNo, "cancel_order"};
+        List<NameValuePair> paramsList = HttpClient.getParams(params, values);
+        Object o = session.httpsPost(CANCEL_NO_COMPLETE_ORDER, paramsList, null);
+        if (!(o instanceof JSONObject)) {
+            LOGGER.error("cancelNoCompleteOrder:" + o);
+            return false;
+        }
+        JSONObject res = (JSONObject) o;
+        if (!res.getBoolean("status")) {
+            LOGGER.info("cancelNoCompleteOrder:" + res);
+            return false;
+        } else {
+            LOGGER.info("请求成功");
+            return true;
+        }
+    }
+
     public static JSONObject queryNoCompleteAnOrder(Session session) {
         Object o = session.httpsPost(QUERY_NO_COMPLETE_AN_ORDER, null, null);
         if (!(o instanceof JSONObject)) {
@@ -922,6 +911,142 @@ public class API12306 {
             return res;
         }
     }
+
+
+    public static JSONObject queryMyUntraveledOrder(Session session) {
+        Object[] params = new Object[]{"come_from_flag", "pageIndex", "pageSize", "query_where", "queryStartDate", "queryEndDate", "queryType", "sequeue_train_name"};
+        Object[] values = new Object[]{"my_order", 0, 8, "G", TimeFormatUtil.getDateStr(-120), TimeFormatUtil.getDateStr(0), 1, ""};
+        List<NameValuePair> paramsList = HttpClient.getParams(params, values);
+        Object o = session.httpsPost(QUERY_MY_ORDER, paramsList, null);
+        if (!(o instanceof JSONObject)) {
+            LOGGER.error("queryMyUntraveledOrder:" + o);
+            return null;
+        }
+        JSONObject res = (JSONObject) o;
+        if (!res.getBoolean("status")) {
+            LOGGER.info("queryMyUntraveledOrder:" + res);
+            return null;
+        } else {
+            LOGGER.info("请求成功");
+            return res;
+        }
+    }
+
+    public static JSONObject queryMyUnChashAnOrder(Session session) {
+        Object[] params = new Object[]{"page_no", "query_start_date", "query_end_date"};
+        Object[] values = new Object[]{0, TimeFormatUtil.getDateStr(-120), TimeFormatUtil.getDateStr(120)};
+        List<NameValuePair> paramsList = HttpClient.getParams(params, values);
+        Object o = session.httpsPost(QUERY_NO_CASH_AN_ORDER, paramsList, null);
+        if (!(o instanceof JSONObject)) {
+            LOGGER.error("queryMyUntraveledOrder:" + o);
+            return null;
+        }
+        JSONObject res = (JSONObject) o;
+        if (!res.getBoolean("status")) {
+            LOGGER.info("queryMyUntraveledOrder:" + res);
+            return null;
+        } else {
+            LOGGER.info("请求成功");
+            return res;
+        }
+    }
+
+    //https://kyfw.12306.cn/otn/afterNateOrder/queryProcessedHOrder
+
+    /**
+     * 查询已处理的候补订单
+     * @param session
+     * @return
+     */
+    public static JSONObject queryProcessedHOrder(Session session) {
+        Object[] params = new Object[]{"page_no", "query_start_date", "query_end_date"};
+        Object[] values = new Object[]{0, TimeFormatUtil.getDateStr(-120), TimeFormatUtil.getDateStr(120)};
+        List<NameValuePair> paramsList = HttpClient.getParams(params, values);
+        Object o = session.httpsPost(QUERY_PROCESSED_AN_ORDER, paramsList, null);
+        if (!(o instanceof JSONObject)) {
+            LOGGER.error("queryProcessedHOrder:" + o);
+            return null;
+        }
+        JSONObject res = (JSONObject) o;
+        if (!res.getBoolean("status")) {
+            LOGGER.info("queryProcessedHOrder:" + res);
+            return null;
+        } else {
+            LOGGER.info("请求成功");
+            return res;
+        }
+    }
+
+    public static JSONObject reserveReturnCheck(Session session, String reserveNo) {
+        Object[] params = new Object[]{"sequence_no"};
+        Object[] values = new Object[]{reserveNo};
+        List<NameValuePair> paramsList = HttpClient.getParams(params, values);
+        Object o = session.httpsPost(CANCEL_NO_CASH_AN_ORDER1, paramsList, null);
+        if (!(o instanceof JSONObject)) {
+            LOGGER.error("reserveReturnCheck:" + o);
+            return null;
+        }
+        JSONObject res = (JSONObject) o;
+        if (!res.getBoolean("status")) {
+            LOGGER.info("reserveReturnCheck:" + res);
+            return null;
+        } else {
+            return res;
+        }
+    }
+
+    public static JSONObject reserveReturn(Session session, String reserveNo) {
+        Object[] params = new Object[]{"sequence_no"};
+        Object[] values = new Object[]{reserveNo};
+        List<NameValuePair> paramsList = HttpClient.getParams(params, values);
+        Object o = session.httpsPost(CANCEL_NO_CASH_AN_ORDER2, paramsList, null);
+        if (!(o instanceof JSONObject)) {
+            LOGGER.error("reserveReturn:" + o);
+            return null;
+        }
+        JSONObject res = (JSONObject) o;
+        if (!res.getBoolean("status")) {
+            LOGGER.info("reserveReturn:" + res);
+            return null;
+        } else {
+            return res;
+        }
+    }
+
+
+    public static JSONObject reserveReturnSuccessApi(Session session) {
+        Object o = session.httpsPost(CANCEL_NO_CASH_AN_ORDER3, null, null);
+        if (!(o instanceof JSONObject)) {
+            LOGGER.error("reserveReturnSuccessApi:" + o);
+            return null;
+        }
+        JSONObject res = (JSONObject) o;
+        if (!res.getBoolean("status")) {
+            LOGGER.info("reserveReturnSuccessApi:" + res);
+            return null;
+        } else {
+            return res;
+        }
+    }
+
+    public static JSONObject cancelNoPaidAnOrder(Session session, String reserveNo) {
+        Object[] params = new Object[]{"sequence_no"};
+        Object[] values = new Object[]{reserveNo};
+        List<NameValuePair> paramsList = HttpClient.getParams(params, values);
+        Object o = session.httpsPost(CANCEL_NO_PAID_AN_ORDER, paramsList, null);
+        if (!(o instanceof JSONObject)) {
+            LOGGER.error("cancelNoPaidAnOrder:" + o);
+            return null;
+        }
+        JSONObject res = (JSONObject) o;
+        if (!res.getBoolean("status")) {
+            LOGGER.info("cancelNoPaidAnOrder:" + res);
+            return null;
+        } else {
+            return res;
+        }
+    }
+
 
     private static class AlgHelper {
         private final static Map<String, String> data = new TreeMap<>();

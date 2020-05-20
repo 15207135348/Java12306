@@ -1,13 +1,11 @@
 package com.yy.observer;
 
+import com.yy.domain.FindResult;
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.alternate.states.AlternateRushingState;
-import com.yy.statemachine.realtime.states.RealTimeRushingState;
 import com.yy.domain.Train;
 import com.yy.statemachine.states.CanceledState;
 import com.yy.statemachine.states.FailedState;
 import com.yy.statemachine.states.SleepingState;
-
 
 import java.util.*;
 import java.util.concurrent.SynchronousQueue;
@@ -15,7 +13,7 @@ import java.util.concurrent.SynchronousQueue;
 public class Finder {
 
 
-    private static FindResult waitResult(AbstractOrderContext orderContext, Observer<Data> observer,
+    private static FindResult waitResult(AbstractOrderContext orderContext, com.yy.observer.Observer<QueryResult> observer,
                                          SynchronousQueue<FindResult> synchronousQueue) {
         //初始化查询线程（父类是Subject），没查一次票会通知一次观察者去匹配余票
         //一个订单按日期分为多个查询线程
@@ -67,11 +65,12 @@ public class Finder {
         final SynchronousQueue<FindResult> synchronousQueue = new SynchronousQueue<>();
 
         //初始化观察者
-        Observer<Data> observer = new Observer<Data>(orderContext.getOrder().getOrderId()) {
+        Observer<QueryResult> observer = new Observer<QueryResult>(orderContext.getOrder().getOrderId()) {
             @Override
-            public void onMessage(Data data) {
+            public void onMessage(QueryResult data) {
                 //余票匹配算法
-                FindResult result = find(data.getTrainList(), data.getDate(), trainCodes, seats, people.size());
+                FindResult result = findRealTime(data.getTrainList(), data.getDate(), trainCodes, seats, people.size());
+                orderContext.getAction().addQueryCount(orderContext);
                 //如果符合要求，就加入阻塞队列
                 if (result.isFound()) {
                     try {
@@ -80,10 +79,8 @@ public class Finder {
                         e.printStackTrace();
                     }
                 }
-                //如果当前状态不是抢票中状态（可能为：睡觉中，已取消，已过期），则向阻塞队列发送数据，使得退出阻塞状态
-                if (orderContext.getState() instanceof SleepingState
-                        || orderContext.getState() instanceof CanceledState
-                        || orderContext.getState() instanceof FailedState) {
+                //如果状态机已关闭，则向阻塞队列发送数据，使得退出阻塞状态
+                if (!orderContext.isRunning()) {
                     try {
                         synchronousQueue.put(result);
                     } catch (InterruptedException e) {
@@ -92,6 +89,8 @@ public class Finder {
                 }
             }
         };
+
+        //订阅主题，等待结果
         return waitResult(orderContext, observer, synchronousQueue);
     }
 
@@ -115,11 +114,12 @@ public class Finder {
         final SynchronousQueue<FindResult> synchronousQueue = new SynchronousQueue<>();
 
         //初始化观察者
-        Observer<Data> observer = new Observer<Data>(orderContext.getOrder().getOrderId()) {
+        Observer<QueryResult> observer = new Observer<QueryResult>(orderContext.getOrder().getOrderId()) {
             @Override
-            public void onMessage(Data data) {
+            public void onMessage(QueryResult data) {
                 //余票匹配算法
                 FindResult result = findAlternate(data.getTrainList(), data.getDate(), trainCodes, seats, people.size());
+                orderContext.getAction().addQueryCount(orderContext);
                 //如果符合要求，就加入阻塞队列
                 if (result.isFound()) {
                     try {
@@ -128,10 +128,8 @@ public class Finder {
                         e.printStackTrace();
                     }
                 }
-                //如果当前状态不是抢票中状态（可能为：睡觉中，已取消，已过期），则向阻塞队列发送数据，使得退出阻塞状态
-                if (orderContext.getState() instanceof SleepingState
-                        || orderContext.getState() instanceof CanceledState
-                        || orderContext.getState() instanceof FailedState) {
+                //如果状态机已关闭，则向阻塞队列发送数据，使得退出阻塞状态
+                if (!orderContext.isRunning()) {
                     try {
                         synchronousQueue.put(result);
                     } catch (InterruptedException e) {
@@ -140,6 +138,8 @@ public class Finder {
                 }
             }
         };
+
+        //订阅主题，等待结果
         return waitResult(orderContext, observer, synchronousQueue);
     }
 
@@ -154,7 +154,7 @@ public class Finder {
      * @param size        乘客数量
      * @return 匹配结果
      */
-    private static FindResult find(List<Train> trainList, String date, Set<String> trainCodes, Set<String> targetSeats, int size) {
+    private static FindResult findRealTime(List<Train> trainList, String date, Set<String> trainCodes, Set<String> targetSeats, int size) {
         //打乱匹配的顺序，防止因为某辆列车人数较多导致每次都下单失败
         Collections.shuffle(trainList);
         //按车次过滤

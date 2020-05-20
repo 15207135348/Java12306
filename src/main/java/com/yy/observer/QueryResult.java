@@ -4,11 +4,11 @@ import com.yy.domain.Train;
 
 import java.util.List;
 
-public class Data {
+public class QueryResult {
     private List<Train> trainList;
     private String date;
 
-    public Data(List<Train> trainList, String date) {
+    public QueryResult(List<Train> trainList, String date) {
         this.trainList = trainList;
         this.date = date;
     }

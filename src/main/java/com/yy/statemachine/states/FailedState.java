@@ -1,15 +1,11 @@
 package com.yy.statemachine.states;
 
 import com.yy.statemachine.AbstractOrderContext;
-import com.yy.statemachine.AbstractOrderState;
 import com.yy.statemachine.OrderAction;
+import com.yy.statemachine.OrderState;
 
-public class FailedState extends AbstractOrderState {
+public class FailedState implements OrderState {
 
-
-    public FailedState(String stateName) {
-        super(stateName);
-    }
 
     @Override
     public void entry(AbstractOrderContext context) {
@@ -19,6 +15,7 @@ public class FailedState extends AbstractOrderState {
         action.update(context);
         //通知完成
         action.notifyFailed(context);
+        context.stop();
     }
 
     @Override
@@ -47,12 +44,12 @@ public class FailedState extends AbstractOrderState {
     }
 
     @Override
-    public void conflict(AbstractOrderContext context) {
+    public void found(AbstractOrderContext context) {
 
     }
 
     @Override
-    public void found(AbstractOrderContext context) {
+    public void conflict(AbstractOrderContext context) {
 
     }
 
