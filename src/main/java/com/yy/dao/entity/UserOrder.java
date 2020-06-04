@@ -2,15 +2,15 @@ package com.yy.dao.entity;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.yy.domain.JsonAble;
-import com.yy.util.TimeFormatUtil;
+import com.yy.other.domain.JSONAble;
+import com.yy.common.util.TimeFormatUtil;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
 @Table(name = "user_order")
-public class UserOrder implements JsonAble {
+public class UserOrder implements JSONAble {
     @Id
     @GeneratedValue
     private int id;

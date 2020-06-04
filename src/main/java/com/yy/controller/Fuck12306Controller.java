@@ -2,16 +2,17 @@ package com.yy.controller;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.yy.statemachine.OrderContextManager;
-import com.yy.aop.interfaces.RecordLog;
-import com.yy.api.rail.TicketInquirer;
-import com.yy.dao.*;
+import com.yy.dao.repository.*;
+import com.yy.service.authority.CheckPermission;
+import com.yy.service.rushmanager.OrderContextManager;
+import com.yy.common.log.RecordLog;
+import com.yy.integration.rail.TicketInquirer;
 import com.yy.dao.entity.*;
-import com.yy.domain.RespMessage;
-import com.yy.domain.Train;
-import com.yy.util.CookieUtil;
-import com.yy.factory.SessionFactory;
-import com.yy.util.TimeFormatUtil;
+import com.yy.other.domain.RespMessage;
+import com.yy.other.domain.Train;
+import com.yy.service.authority.CookieManager;
+import com.yy.other.factory.SessionFactory;
+import com.yy.common.util.TimeFormatUtil;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -83,23 +84,14 @@ public class Fuck12306Controller {
         return respMessage;
     }
 
+    @CheckPermission
     @RecordLog
     @GetMapping(value = "/get_people")
     @ResponseBody
     public RespMessage getPeople(HttpServletRequest request, HttpServletResponse response) {
         RespMessage respMessage = new RespMessage();
-        String openID = CookieUtil.getOpenIDFromRequest(request);
-        if (openID == null) {
-            respMessage.setSuccess(false);
-            respMessage.setMessage("请先调用login_wx接口进行登陆");
-            return respMessage;
-        }
+        String openID = CookieManager.getOpenIDFromRequest(request);
         WxAccount wxAccount = wxAccountRepository.findByOpenId(openID);
-        if (wxAccount == null || wxAccount.getUsername() == null) {
-            respMessage.setSuccess(false);
-            respMessage.setMessage("请先登陆12306账户");
-            return respMessage;
-        }
         List<Passenger> passengers = passengerRepository.findAllByUsername(wxAccount.getUsername());
         JSONArray array = new JSONArray();
         for (Passenger passenger : passengers) {
@@ -110,18 +102,14 @@ public class Fuck12306Controller {
         return respMessage;
     }
 
+    @CheckPermission
     @RecordLog
     @GetMapping(value = "/get_orders")
     @ResponseBody
     public RespMessage getOrders(HttpServletRequest request, HttpServletResponse response) {
 
         RespMessage respMessage = new RespMessage();
-        String openID = CookieUtil.getOpenIDFromRequest(request);
-        if (openID == null) {
-            respMessage.setSuccess(false);
-            respMessage.setMessage("请先调用login_wx接口进行登陆");
-            return respMessage;
-        }
+        String openID = CookieManager.getOpenIDFromRequest(request);
         JSONArray array = new JSONArray();
         List<UserOrder> orders = userOrderRepository.findAllByOpenId(openID);
         if (orders == null || orders.isEmpty()) {
@@ -155,6 +143,7 @@ public class Fuck12306Controller {
         return respMessage;
     }
 
+    @CheckPermission
     @RecordLog
     @GetMapping(value = "/cancel_order")
     @ResponseBody
@@ -179,6 +168,7 @@ public class Fuck12306Controller {
         return respMessage;
     }
 
+    @CheckPermission
     @RecordLog
     @GetMapping(value = "/delete_order")
     @ResponseBody
@@ -211,12 +201,13 @@ public class Fuck12306Controller {
      * @param response
      * @return
      */
+    @CheckPermission
     @RecordLog
     @GetMapping(value = "/fuck12306")
     @ResponseBody
     public RespMessage submitOrder(HttpServletRequest request, HttpServletResponse response) {
         RespMessage respMessage = new RespMessage();
-        String openID = CookieUtil.getOpenIDFromRequest(request);
+        String openID = CookieManager.getOpenIDFromRequest(request);
         if (openID == null) {
             respMessage.setSuccess(false);
             respMessage.setMessage("请先调用login_wx接口进行登陆");
@@ -255,6 +246,7 @@ public class Fuck12306Controller {
         return respMessage;
     }
 
+    @CheckPermission
     @RecordLog
     @GetMapping(value = "/get_success_info")
     @ResponseBody
@@ -294,6 +286,7 @@ public class Fuck12306Controller {
         return respMessage;
     }
 
+    @CheckPermission
     @RecordLog
     @GetMapping(value = "/get_an_success_info")
     @ResponseBody

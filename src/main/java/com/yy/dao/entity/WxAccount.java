@@ -24,8 +24,6 @@ public class WxAccount {
     @Column(name = "priority")
     private int priority;
 
-
-
     public int getId() {
         return id;
     }

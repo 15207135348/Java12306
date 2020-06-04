@@ -1,5 +1,5 @@
 import com.alibaba.fastjson.JSONArray;
-import com.yy.util.PinyinUtil;
+import com.yy.common.util.PinyinUtil;
 
 import java.util.*;
 

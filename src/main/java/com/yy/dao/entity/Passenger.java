@@ -1,11 +1,11 @@
 package com.yy.dao.entity;
 
-import com.yy.domain.JsonAble;
+import com.yy.other.domain.JSONAble;
 import javax.persistence.*;
 
 @Entity
 @Table(name = "passenger")
-public class Passenger implements JsonAble {
+public class Passenger implements JSONAble {
     @Id
     @GeneratedValue
     private int id;

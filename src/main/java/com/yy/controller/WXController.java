@@ -1,6 +1,6 @@
 package com.yy.controller;
 
-import com.yy.aop.interfaces.RecordLog;
+import com.yy.common.log.RecordLog;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

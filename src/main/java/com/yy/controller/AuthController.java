@@ -1,15 +1,16 @@
 package com.yy.controller;
 
-import com.yy.aop.interfaces.RecordLog;
-import com.yy.api.rail.PersonalCenter;
-import com.yy.dao.PassengerRepository;
-import com.yy.dao.WxAccountRepository;
+import com.yy.common.log.RecordLog;
+import com.yy.integration.rail.PersonalCenter;
+import com.yy.dao.repository.PassengerRepository;
+import com.yy.dao.repository.WxAccountRepository;
 import com.yy.dao.entity.Passenger;
 import com.yy.dao.entity.WxAccount;
-import com.yy.domain.RespMessage;
-import com.yy.api.APIWeChat;
-import com.yy.api.rail.Login12306;
-import com.yy.util.CookieUtil;
+import com.yy.other.domain.RespMessage;
+import com.yy.integration.rail.Login12306;
+import com.yy.service.authority.CheckPermission;
+import com.yy.service.authority.CookieManager;
+import com.yy.service.authority.LoginWXService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -38,43 +39,26 @@ public class AuthController {
     @Autowired
     private WxAccountRepository wxAccountRepository;
 
+    @Autowired
+    private LoginWXService loginWXService;
+
     @RecordLog
     @GetMapping(value = "/login_wx")
     @ResponseBody
     public RespMessage loginWX(HttpServletRequest request, HttpServletResponse response) {
-        RespMessage respMessage = new RespMessage();
         String code = request.getParameter("code");
         if (code == null) {
-            respMessage.setSuccess(false);
-            respMessage.setMessage("code为空");
-            return respMessage;
+            return new RespMessage(false, "code为空");
         }
         try {
-            //拿到微信用户的openID和secret等信息
-            WxAccount newAccount = APIWeChat.code2Session(code);
-            if (newAccount == null) {
-                respMessage.setSuccess(false);
-                respMessage.setMessage("code2Session出现错误");
-                return respMessage;
+            if (!loginWXService.login(code)){
+                return new RespMessage(false, "code2Session出现错误");
             }
-            WxAccount oldAccount = wxAccountRepository.findByOpenId(newAccount.getOpenId());
-            if (oldAccount == null) {
-                wxAccountRepository.save(newAccount);
-            } else {
-                oldAccount.setSessionKey(oldAccount.getSessionKey());
-                oldAccount.setUnionId(oldAccount.getUnionId());
-                wxAccountRepository.save(oldAccount);
-            }
-            //添加cookie
-            CookieUtil.addCookie(newAccount.getOpenId(), response);
             //返回消息
-            respMessage.setSuccess(true);
-            respMessage.setMessage("登陆成功");
-            return respMessage;
+            return new RespMessage(true, "登陆成功");
         } catch (Exception e) {
-            respMessage.setSuccess(false);
-            respMessage.setMessage(e.getMessage());
-            return respMessage;
+            LOGGER.error("loginWX:服务器内部错误");
+            return new RespMessage(false, "服务器内部错误");
         }
     }
 
@@ -85,12 +69,13 @@ public class AuthController {
      * @param response
      * @return
      */
+    @CheckPermission
     @RecordLog
     @GetMapping(value = "/get_12306_account")
     @ResponseBody
     public RespMessage get12306Account(HttpServletRequest request, HttpServletResponse response) {
         RespMessage respMessage = new RespMessage();
-        String openID = CookieUtil.getOpenIDFromRequest(request);
+        String openID = CookieManager.getOpenIDFromRequest(request);
         if (openID == null) {
             respMessage.setSuccess(false);
             respMessage.setMessage("请先调用login_wx接口进行登陆");
@@ -114,16 +99,12 @@ public class AuthController {
      * @param response
      * @return
      */
+    @CheckPermission
     @RecordLog
     @GetMapping(value = "/set_12306_account")
     @ResponseBody
     public RespMessage set12306Account(HttpServletRequest request, HttpServletResponse response) {
         RespMessage respMessage = new RespMessage();
-        String openID = CookieUtil.getOpenIDFromRequest(request);
-        if (openID == null) {
-            respMessage.setSuccess(false);
-            respMessage.setMessage("请先调用login_wx接口进行登陆");
-        }
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         if (username == null || password == null) {
@@ -143,31 +124,28 @@ public class AuthController {
             return respMessage;
         }
         //设置用户名和密码
+        String openID = CookieManager.getOpenIDFromRequest(request);
         WxAccount wxAccount = wxAccountRepository.findByOpenId(openID);
         wxAccount.setUsername(username);
         wxAccount.setPassword(password);
         wxAccountRepository.save(wxAccount);
-        //异步获取乘客人信息，并保存到数据库
+        //获取乘客人信息，并保存到数据库
         new Thread(() -> {
             List<Passenger> passengers = PersonalCenter.getPassengers(username);
-            saveOrUpdatePassengers(passengers);
+            for (Passenger passenger : passengers) {
+                Passenger passenger1 = passengerRepository.findByUsernameAndName(passenger.getUsername(), passenger.getName());
+                if (passenger1 == null) {
+                    passengerRepository.save(passenger);
+                    LOGGER.info("添加乘客人");
+                } else {
+                    passenger.setId(passenger1.getId());
+                    passengerRepository.save(passenger);
+                    LOGGER.info("更新乘客人");
+                }
+            }
         }).start();
         respMessage.setSuccess(true);
         respMessage.setMessage("操作成功");
         return respMessage;
-    }
-
-    public void saveOrUpdatePassengers(List<Passenger> passengers) {
-        for (Passenger passenger : passengers) {
-            Passenger passenger1 = passengerRepository.findByUsernameAndName(passenger.getUsername(), passenger.getName());
-            if (passenger1 == null) {
-                passengerRepository.save(passenger);
-                LOGGER.info("添加乘客人");
-            } else {
-                passenger.setId(passenger1.getId());
-                passengerRepository.save(passenger);
-                LOGGER.info("更新乘客人");
-            }
-        }
     }
 }
