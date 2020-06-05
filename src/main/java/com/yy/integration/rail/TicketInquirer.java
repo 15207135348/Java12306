@@ -86,7 +86,8 @@ public class TicketInquirer {
             if (set.contains(trains.get(i).getTrainCode())) {
                 String timeStr = dateArr[0] + " " + trains.get(i).getFromTime();
                 long timestamp = TimeFormatUtil.date2Stamp(timeStr, "yyyy-MM-dd HH:mm");
-                expireTime = timestamp - 1000 * 3600 * 2;
+                //抢票至开车前40分钟
+                expireTime = timestamp - 2400000;
                 break;
             }
         }

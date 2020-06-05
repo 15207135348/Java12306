@@ -9,6 +9,7 @@ import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombi
 
 public class PinyinUtil {
 
+
     public static String getPingYin(String src) {
         char[] t1;
         t1 = src.toCharArray();

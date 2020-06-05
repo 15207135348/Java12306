@@ -3,7 +3,7 @@ package com.yy.common.util;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-public class Base64s {
+public class Base64Util {
 
     public static String encode(String text)
     {

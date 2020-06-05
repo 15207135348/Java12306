@@ -84,6 +84,22 @@ public class Fuck12306Controller {
         return respMessage;
     }
 
+    @RecordLog
+    @GetMapping(value = "/get_expire_time")
+    @ResponseBody
+    public RespMessage getExpireTime(HttpServletRequest request, HttpServletResponse response){
+        String fromStation = request.getParameter("fromStation");
+        String toStation = request.getParameter("toStation");
+        String dates = request.getParameter("dates");
+        dates = TimeFormatUtil.CNTime2UNTime(request.getParameter("dates"));
+        String trains = request.getParameter("trains");
+        long expireTime = TicketInquirer.getExpireTime(SessionFactory.getSession(null),
+                dates, fromStation, toStation, trains);
+        String expiredStr = TimeFormatUtil.stampToDate(expireTime, "MM月dd日 HH:mm");
+        LOGGER.info(expiredStr);
+        return new RespMessage(true, expiredStr);
+    }
+
     @CheckPermission
     @RecordLog
     @GetMapping(value = "/get_people")

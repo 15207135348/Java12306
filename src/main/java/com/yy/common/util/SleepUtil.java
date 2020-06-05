@@ -7,12 +7,9 @@ import java.util.Random;
 public class SleepUtil {
 
     private static final Logger LOGGER = Logger.getLogger(SleepUtil.class);
-
     private static final Random random = new Random();
 
-
-    public static void sleep(int millis)
-    {
+    public static void sleep(int millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
@@ -20,7 +17,7 @@ public class SleepUtil {
         }
     }
 
-    public static void sleepRandomTime(int min, int max){
+    public static void sleepRandomTime(int min, int max) {
         try {
             Thread.sleep(random.nextInt(max - min) + min);
         } catch (InterruptedException e) {

@@ -2,7 +2,6 @@ package com.yy.other.constant;
 
 public enum TrainType {
 
-
     C("城际列车", true, true),
     D("动车组", true, true),
     G("高速列车", true, true),
@@ -14,11 +13,9 @@ public enum TrainType {
     Y("旅游列车", true, true),
     O("普快列车", true, false);
 
-
     private String desc;
     private boolean hasAirConditioning;
     private boolean isNewAirConditioning;
-
 
     TrainType(String desc, boolean hasAirConditioning, boolean isNewAirConditioning) {
         this.desc = desc;

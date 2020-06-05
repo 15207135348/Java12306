@@ -15,7 +15,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.*;
@@ -26,12 +25,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ProxyService {
 
     private static final Logger LOGGER = Logger.getLogger(ProxyService.class);
-
     //获取代理的网站
     private static final String proxyWebSite = "https://www.xicidaili.com/nn/";
     private static final Random random = new Random();
     private static Map<String, HttpHost> httpHostMap = new ConcurrentHashMap<>();
-
     private static String key(HttpProxy httpProxy) {
         return httpProxy.getIp() + ":" + httpProxy.getPort();
     }
@@ -41,7 +38,7 @@ public class ProxyService {
 
     //获取https类型的代理
     public static HttpHost getHttpsProxy() {
-        HttpHost httpHost = null;
+//        HttpHost httpHost = null;
 //        if (!httpHostMap.isEmpty())
 //        {
 //            int pos = random.nextInt(httpHostMap.size());

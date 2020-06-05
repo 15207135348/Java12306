@@ -5,7 +5,6 @@ import com.yy.other.domain.HttpSession;
 import com.yy.service.authority.CookieManager;
 import org.apache.http.cookie.Cookie;
 import org.apache.log4j.Logger;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,7 +13,6 @@ public class SessionFactory {
     private static final Logger LOGGER = Logger.getLogger(SessionFactory.class);
     //用户名与Session之间的映射
     private static Map<String, HttpSession> sessions = new ConcurrentHashMap<>();
-
     //与登陆相关
     private static final String INIT_URL = "https://kyfw.12306.cn/otn/login/init";
     private static final boolean useChrome = false;
@@ -25,7 +23,6 @@ public class SessionFactory {
         }
         sessions.remove(username);
     }
-
 
     public static HttpSession getSession(String username) {
         if (username == null || username.isEmpty()) {

@@ -1,6 +1,6 @@
 package com.yy.service.authority;
 
-import com.yy.common.util.Base64s;
+import com.yy.common.util.Base64Util;
 import com.yy.common.util.OsUtil;
 import org.apache.log4j.Logger;
 import org.openqa.selenium.WebDriver;
@@ -22,7 +22,7 @@ public class CookieManager {
      */
     private static String genCookieValue(String openID)
     {
-        return Base64s.encode(openID);
+        return Base64Util.encode(openID);
     }
 
     /**
@@ -72,7 +72,7 @@ public class CookieManager {
         {
             return null;
         }
-        return Base64s.decode(encodedText);
+        return Base64Util.decode(encodedText);
     }
 
     private static final String macChromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -115,4 +115,5 @@ public class CookieManager {
         driver.quit();
         return cookies;
     }
+
 }
